@@ -1,0 +1,12 @@
+{
+  "name": "keyboard",
+  "bot": "keyboard",
+  "seeds": [1],
+  "days": 1,
+  "speed": 1,
+  "checks": ["invariants", "no_errors", "hotkeys_operational"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

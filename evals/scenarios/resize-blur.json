@@ -1,0 +1,12 @@
+{
+  "name": "resize-blur",
+  "bot": "resize-blur",
+  "seeds": [1],
+  "days": 1,
+  "speed": 1,
+  "checks": ["invariants", "no_errors", "resize_handled", "auto_paused_on_hidden"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

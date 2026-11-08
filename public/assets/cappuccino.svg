@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <radialGradient id="cap-shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#140a05" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#140a05" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="cap-cup" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#f5efe6" />
+      <stop offset="100%" stop-color="#d6c8b8" />
+    </linearGradient>
+    <radialGradient id="cap-foam" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="65%" stop-color="#fdf8f0" />
+      <stop offset="90%" stop-color="#eddac6" />
+      <stop offset="100%" stop-color="#caa27f" />
+    </radialGradient>
+  </defs>
+
+  <!-- Shadow Base -->
+  <ellipse cx="64" cy="112" rx="48" ry="10" fill="url(#cap-shadow)" />
+
+  <!-- Saucer -->
+  <ellipse cx="64" cy="103" rx="46" ry="11" fill="#b8a796" />
+  <ellipse cx="64" cy="101" rx="46" ry="10.5" fill="url(#cap-cup)" />
+  <ellipse cx="64" cy="101.5" rx="36" ry="7" fill="#dfd3c5" />
+
+  <!-- Cup Handle -->
+  <path d="M 86 64 C 108 64, 108 88, 84 90" fill="none" stroke="url(#cap-cup)" stroke-width="7" stroke-linecap="round" />
+  <path d="M 86 64 C 106 64, 106 88, 84 90" fill="none" stroke="#fcfbf9" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Rounded Cup Body -->
+  <path d="M 30 60 C 30 96, 44 102, 64 102 C 84 102, 98 96, 98 60 Z" fill="url(#cap-cup)" stroke="#cbbaa8" stroke-width="1" />
+  <path d="M 34 62 C 34 90, 44 98, 52 100 C 42 96, 38 82, 38 62 Z" fill="#ffffff" opacity="0.6" />
+
+  <!-- Rim Underlay -->
+  <ellipse cx="64" cy="59" rx="34" ry="10" fill="#caa27f" />
+
+  <!-- Fluffy Billowing Foam Mound -->
+  <ellipse cx="64" cy="57" rx="32" ry="11" fill="url(#cap-foam)" />
+  <!-- Additional Foam Puffs for Fluffy Texture -->
+  <ellipse cx="54" cy="55" rx="14" ry="7" fill="#ffffff" opacity="0.9" />
+  <ellipse cx="72" cy="56" rx="15" ry="6.5" fill="#ffffff" opacity="0.85" />
+  <ellipse cx="64" cy="53" rx="16" ry="7" fill="#ffffff" />
+
+  <!-- Cocoa Powder Dusting -->
+  <g fill="#5c2c16" opacity="0.85">
+    <!-- Heart stencil shape dusted with cocoa -->
+    <circle cx="64" cy="54" r="1.5" />
+    <circle cx="62" cy="52" r="1.3" />
+    <circle cx="66" cy="52" r="1.3" />
+    <circle cx="60" cy="50" r="1.4" />
+    <circle cx="68" cy="50" r="1.4" />
+    <circle cx="58" cy="49" r="1.2" />
+    <circle cx="70" cy="49" r="1.2" />
+    <circle cx="64" cy="57" r="1.2" />
+    <!-- Cocoa Specks Sprinkled -->
+    <circle cx="50" cy="55" r="0.9" />
+    <circle cx="76" cy="54" r="0.8" />
+    <circle cx="56" cy="57" r="0.9" />
+    <circle cx="72" cy="58" r="0.9" />
+    <circle cx="63" cy="48" r="1" />
+    <circle cx="65" cy="48" r="1" />
+    <circle cx="64" cy="51" r="1.2" />
+    <circle cx="67" cy="55" r="0.8" />
+    <circle cx="60" cy="54" r="0.8" />
+  </g>
+
+  <!-- Creamy Rim Edge Glow -->
+  <ellipse cx="64" cy="59" rx="31" ry="8.5" fill="none" stroke="#ba8d63" stroke-width="1.2" opacity="0.4" />
+
+  <!-- Rising Steam -->
+  <g opacity="0.75" stroke="#f0e4d7" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <path d="M 56 42 C 52 32, 60 24, 56 16" />
+    <path d="M 68 41 C 73 31, 65 22, 70 14" stroke-width="2.6" />
+  </g>
+</svg>

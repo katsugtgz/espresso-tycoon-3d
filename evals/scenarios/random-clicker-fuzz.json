@@ -1,0 +1,12 @@
+{
+  "name": "random-clicker-fuzz",
+  "bot": "random-clicker",
+  "seeds": [1, 2, 3],
+  "days": 3,
+  "speed": 4,
+  "checks": ["invariants", "no_errors", "no_crashes"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <radialGradient id="mc-shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#140a05" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#140a05" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="mc-steel" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="25%" stop-color="#cbd5e1" />
+      <stop offset="50%" stop-color="#94a3b8" />
+      <stop offset="75%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+    <linearGradient id="mc-red" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="50%" stop-color="#b91c1c" />
+      <stop offset="100%" stop-color="#7f1d1d" />
+    </linearGradient>
+    <linearGradient id="mc-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow Base -->
+  <ellipse cx="64" cy="116" rx="48" ry="8" fill="url(#mc-shadow)" />
+
+  <!-- Feet -->
+  <rect x="24" y="110" width="8" height="5" rx="2" fill="#1e293b" />
+  <rect x="96" y="110" width="8" height="5" rx="2" fill="#1e293b" />
+
+  <!-- Main Machine Body Outer Shell -->
+  <rect x="20" y="32" width="88" height="78" rx="4" fill="url(#mc-steel)" stroke="#64748b" stroke-width="1" />
+  
+  <!-- Italian Red Side Panels Accent -->
+  <path d="M 20 32 L 28 32 L 28 110 L 20 110 Z" fill="url(#mc-red)" />
+  <path d="M 100 32 L 108 32 L 108 110 L 100 110 Z" fill="url(#mc-red)" />
+
+  <!-- Cup Warmer Rail on Top -->
+  <path d="M 22 32 L 22 24 L 106 24 L 106 32" fill="none" stroke="url(#mc-gold)" stroke-width="2.5" stroke-linecap="round" />
+  <line x1="42" y1="24" x2="42" y2="32" stroke="url(#mc-gold)" stroke-width="1.8" />
+  <line x1="64" y1="24" x2="64" y2="32" stroke="url(#mc-gold)" stroke-width="1.8" />
+  <line x1="86" y1="24" x2="86" y2="32" stroke="url(#mc-gold)" stroke-width="1.8" />
+
+  <!-- Small Demitasse Cups on Top Warmer -->
+  <path d="M 32 31 L 34 26 L 46 26 L 48 31 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+  <path d="M 72 31 L 74 26 L 86 26 L 88 31 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+
+  <!-- Upper Control Panel -->
+  <rect x="28" y="36" width="72" height="26" fill="#1e293b" />
+  
+  <!-- Dual Analog Pressure Dial (9 BAR 15 BAR) -->
+  <g transform="translate(44, 49)">
+    <circle cx="0" cy="0" r="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" />
+    <circle cx="0" cy="0" r="9" fill="none" stroke="url(#mc-gold)" stroke-width="0.8" />
+    <!-- Ideal extraction zone arc (green) -->
+    <path d="M -4 -7 A 8 8 0 0 1 5 -6" fill="none" stroke="#22c55e" stroke-width="1.8" />
+    <!-- Pressure Needle -->
+    <line x1="0" y1="2" x2="2" y2="-6" stroke="#dc2626" stroke-width="1.2" stroke-linecap="round" />
+    <circle cx="0" cy="0" r="1.5" fill="#0f172a" />
+  </g>
+
+  <!-- Power Toggle Switch / Lever -->
+  <g transform="translate(84, 49)">
+    <rect x="-6" y="-6" width="12" height="12" rx="2" fill="#0f172a" stroke="#475569" stroke-width="1" />
+    <!-- Green indicator LED -->
+    <circle cx="0" cy="-2" r="2.5" fill="#22c55e" />
+    <rect x="-3" y="2" width="6" height="3" rx="1" fill="#cbd5e1" />
+  </g>
+
+  <!-- Center Group Head (E61 Brass Chrome Style) -->
+  <g transform="translate(64, 62)">
+    <!-- Collar flange -->
+    <path d="M -14 0 L 14 0 L 11 8 L -11 8 Z" fill="url(#mc-gold)" stroke="#78350f" stroke-width="0.5" />
+    <!-- Group bell cylinder -->
+    <rect x="-10" y="8" width="20" height="6" rx="1" fill="url(#mc-steel)" />
+
+    <!-- Portafilter Assembly -->
+    <!-- Filter Basket Ring -->
+    <rect x="-12" y="14" width="24" height="6" rx="2" fill="url(#mc-steel)" stroke="#475569" stroke-width="0.8" />
+    
+    <!-- Twin Pour Spouts -->
+    <path d="M -4 20 L -6 25 L -3 25 L -2 20 Z" fill="url(#mc-steel)" />
+    <path d="M 4 20 L 6 25 L 3 25 L 2 20 Z" fill="url(#mc-steel)" />
+
+    <!-- Espresso Extraction Stream -->
+    <line x1="-4.5" y1="25" x2="-4.5" y2="35" stroke="#9a3412" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="4.5" y1="25" x2="4.5" y2="35" stroke="#9a3412" stroke-width="1.2" stroke-linecap="round" />
+
+    <!-- Portafilter Handle (angled outwards) -->
+    <g transform="rotate(-18 -12 17)">
+      <rect x="-42" y="15" width="30" height="5" rx="2.5" fill="#29180d" stroke="#522f18" stroke-width="0.8" />
+      <rect x="-15" y="16" width="5" height="3" fill="url(#mc-steel)" />
+      <!-- Chrome end cap -->
+      <circle cx="-42" cy="17.5" r="2.5" fill="url(#mc-steel)" />
+    </g>
+  </g>
+
+  <!-- Steam Wand on Left -->
+  <g transform="translate(32, 64)">
+    <!-- Ball joint & valve -->
+    <circle cx="0" cy="0" r="3.5" fill="url(#mc-steel)" />
+    <!-- Wand pipe -->
+    <path d="M 0 0 C -4 10, -6 24, 0 32" fill="none" stroke="url(#mc-steel)" stroke-width="3" stroke-linecap="round" />
+    <!-- Steam tip -->
+    <ellipse cx="0" cy="32" rx="2.5" ry="1.5" fill="url(#mc-steel)" />
+    <!-- Steam puff wisp -->
+    <path d="M -2 34 C -6 38, -3 42, -5 45" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+  </g>
+
+  <!-- Drip Tray and Cup Stand Grid -->
+  <g transform="translate(28, 98)">
+    <!-- Base Drip Box -->
+    <rect x="0" y="0" width="72" height="12" rx="2" fill="#334155" stroke="#1e293b" stroke-width="1" />
+    <!-- Removable Grill Grid Slots -->
+    <rect x="2" y="1" width="68" height="3" fill="#cbd5e1" />
+    <g stroke="#475569" stroke-width="1">
+      <line x1="8" y1="1" x2="8" y2="4" />
+      <line x1="16" y1="1" x2="16" y2="4" />
+      <line x1="24" y1="1" x2="24" y2="4" />
+      <line x1="32" y1="1" x2="32" y2="4" />
+      <line x1="40" y1="1" x2="40" y2="4" />
+      <line x1="48" y1="1" x2="48" y2="4" />
+      <line x1="56" y1="1" x2="56" y2="4" />
+      <line x1="64" y1="1" x2="64" y2="4" />
+    </g>
+  </g>
+</svg>

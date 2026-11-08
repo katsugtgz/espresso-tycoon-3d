@@ -1,0 +1,14 @@
+{
+  "name": "greedy-optimal",
+  "bot": "greedy",
+  "seeds": [1, 2, 3],
+  "days": 5,
+  "speed": 4,
+  "checks": ["invariants", "no_errors", "not_bankrupt", "impossible_win"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0,
+    "maxMoneyDay7": 20000,
+    "minServedDay1": 1
+  }
+}

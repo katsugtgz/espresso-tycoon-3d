@@ -1,0 +1,12 @@
+{
+  "name": "speedrun-10x",
+  "bot": "speedrun",
+  "seeds": [1, 2, 3],
+  "days": 3,
+  "speed": 10,
+  "checks": ["invariants", "no_errors", "no_crashes"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "save-load",
+  "bot": "save-load",
+  "seeds": [1, 2],
+  "days": 2,
+  "speed": 4,
+  "checks": ["invariants", "no_errors", "state_matches_after_reload"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

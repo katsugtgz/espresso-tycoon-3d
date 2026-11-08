@@ -1,0 +1,12 @@
+{
+  "name": "upgrade-spammer",
+  "bot": "upgrade-spammer",
+  "seeds": [1, 2, 3],
+  "days": 4,
+  "speed": 4,
+  "checks": ["invariants", "no_errors", "upgrades_purchased"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

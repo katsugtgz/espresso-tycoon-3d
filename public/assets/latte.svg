@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lat-shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#140a05" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#140a05" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="lat-cup" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d6a4f" />
+      <stop offset="50%" stop-color="#1b4332" />
+      <stop offset="100%" stop-color="#081c15" />
+    </linearGradient>
+    <radialGradient id="lat-crema" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#e29547" />
+      <stop offset="60%" stop-color="#ba702b" />
+      <stop offset="90%" stop-color="#693711" />
+      <stop offset="100%" stop-color="#3b1b06" />
+    </radialGradient>
+    <linearGradient id="lat-saucer" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9d8a6" />
+      <stop offset="60%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#997b1a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow Base -->
+  <ellipse cx="64" cy="112" rx="46" ry="10" fill="url(#lat-shadow)" />
+
+  <!-- Saucer (Warm Matte Ceramic with Wood/Gold accent) -->
+  <ellipse cx="64" cy="103" rx="45" ry="11" fill="#2b231c" />
+  <ellipse cx="64" cy="101" rx="45" ry="10.5" fill="#f8f4ed" />
+  <ellipse cx="64" cy="101.5" rx="35" ry="7" fill="#dfd6c8" />
+
+  <!-- Cup Handle -->
+  <path d="M 88 64 C 110 64, 110 88, 86 90" fill="none" stroke="url(#lat-cup)" stroke-width="7" stroke-linecap="round" />
+  <path d="M 88 64 C 108 64, 108 88, 86 90" fill="none" stroke="#40916c" stroke-width="3" stroke-linecap="round" opacity="0.6" />
+
+  <!-- Wide Bowl Cup Body (Forest Sage Ceramic) -->
+  <path d="M 28 58 C 28 96, 44 102, 64 102 C 84 102, 100 96, 100 58 Z" fill="url(#lat-cup)" stroke="#1b4332" stroke-width="1" />
+  <!-- Gloss reflection -->
+  <path d="M 33 60 C 33 88, 42 96, 50 99 C 40 95, 37 80, 37 60 Z" fill="#ffffff" opacity="0.25" />
+
+  <!-- Cup Rim -->
+  <ellipse cx="64" cy="58" rx="36" ry="11" fill="#f8f4ed" stroke="#d5c8b5" stroke-width="1.2" />
+
+  <!-- Crema Surface -->
+  <ellipse cx="64" cy="58.5" rx="33" ry="9.5" fill="url(#lat-crema)" />
+
+  <!-- Latte Art: Rosetta / Fern -->
+  <g transform="translate(64, 58.5) scale(0.85, 0.55)">
+    <!-- Central stem cut -->
+    <path d="M 0 14 L 0 -13" stroke="#995213" stroke-width="2.5" stroke-linecap="round" />
+
+    <!-- Rosetta Leaves (Milk White) -->
+    <!-- Base tier -->
+    <path d="M -16 11 Q -24 9, -20 5 Q 0 8, 0 11 Z" fill="#ffffff" />
+    <path d="M 16 11 Q 24 9, 20 5 Q 0 8, 0 11 Z" fill="#ffffff" />
+    
+    <!-- Tier 2 -->
+    <path d="M -20 5 Q -28 2, -22 -2 Q 0 2, 0 5 Z" fill="#ffffff" />
+    <path d="M 20 5 Q 28 2, 22 -2 Q 0 2, 0 5 Z" fill="#ffffff" />
+
+    <!-- Tier 3 -->
+    <path d="M -21 -2 Q -27 -6, -20 -9 Q 0 -4, 0 -2 Z" fill="#ffffff" />
+    <path d="M 21 -2 Q 27 -6, 20 -9 Q 0 -4, 0 -2 Z" fill="#ffffff" />
+
+    <!-- Tier 4 -->
+    <path d="M -18 -8 Q -23 -12, -15 -14 Q 0 -9, 0 -8 Z" fill="#ffffff" />
+    <path d="M 18 -8 Q 23 -12, 15 -14 Q 0 -9, 0 -8 Z" fill="#ffffff" />
+
+    <!-- Top Heart Crown -->
+    <path d="M 0 -15 C -8 -22, -16 -12, 0 -6 C 16 -12, 8 -22, 0 -15 Z" fill="#ffffff" />
+    <path d="M 0 -18 L 0 -4" stroke="#ba702b" stroke-width="2" stroke-linecap="round" />
+  </g>
+
+  <!-- Steam -->
+  <g opacity="0.75" stroke="#f0e4d7" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <path d="M 54 41 C 50 31, 58 23, 54 15" />
+    <path d="M 68 40 C 73 30, 65 21, 71 13" stroke-width="2.6" />
+  </g>
+</svg>

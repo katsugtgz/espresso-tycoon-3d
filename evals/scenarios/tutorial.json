@@ -1,0 +1,12 @@
+{
+  "name": "tutorial",
+  "bot": "tutorial",
+  "seeds": [1],
+  "days": 1,
+  "speed": 1,
+  "checks": ["invariants", "no_errors", "tutorial_done"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

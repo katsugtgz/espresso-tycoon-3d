@@ -1,0 +1,12 @@
+{
+  "name": "idle",
+  "bot": "idle",
+  "seeds": [1, 2, 3],
+  "days": 4,
+  "speed": 10,
+  "checks": ["invariants", "no_errors", "can_bankrupt_or_survive_clean"],
+  "thresholds": {
+    "maxViolations": 0,
+    "maxErrors": 0
+  }
+}

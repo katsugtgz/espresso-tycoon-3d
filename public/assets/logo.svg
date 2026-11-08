@@ -1,0 +1,219 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b2014" />
+      <stop offset="65%" stop-color="#23120b" />
+      <stop offset="100%" stop-color="#120805" />
+    </radialGradient>
+
+    <!-- Gold Gradients -->
+    <linearGradient id="gold-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdf3cd" />
+      <stop offset="25%" stop-color="#d4af37" />
+      <stop offset="50%" stop-color="#aa7c11" />
+      <stop offset="75%" stop-color="#f5d77f" />
+      <stop offset="100%" stop-color="#8a6108" />
+    </linearGradient>
+
+    <linearGradient id="gold-text" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="25%" stop-color="#faecc1" />
+      <stop offset="60%" stop-color="#e5b842" />
+      <stop offset="100%" stop-color="#9a6e12" />
+    </linearGradient>
+
+    <linearGradient id="cup-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#ece4db" />
+      <stop offset="100%" stop-color="#cfbead" />
+    </linearGradient>
+
+    <radialGradient id="crema-grad" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#d99952" />
+      <stop offset="45%" stop-color="#af6e28" />
+      <stop offset="85%" stop-color="#643612" />
+      <stop offset="100%" stop-color="#3c1a05" />
+    </radialGradient>
+
+    <linearGradient id="ribbon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#61120e" />
+      <stop offset="20%" stop-color="#a32019" />
+      <stop offset="50%" stop-color="#c92a20" />
+      <stop offset="80%" stop-color="#a32019" />
+      <stop offset="100%" stop-color="#61120e" />
+    </linearGradient>
+
+    <!-- Shadows and Glows -->
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="badge-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.65" />
+    </filter>
+
+    <filter id="text-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.8" />
+    </filter>
+  </defs>
+
+  <!-- Outer Badge Frame -->
+  <g filter="url(#badge-shadow)">
+    <!-- Base Circular Emblem -->
+    <circle cx="300" cy="300" r="270" fill="url(#gold-rim)" />
+    <circle cx="300" cy="300" r="258" fill="#1b0e09" />
+    <circle cx="300" cy="300" r="252" fill="none" stroke="url(#gold-rim)" stroke-width="2" stroke-dasharray="8 6" opacity="0.8" />
+    <circle cx="300" cy="300" r="240" fill="url(#bg-grad)" />
+
+    <!-- Subtle Radial Ray Lines for Tycoon Energy -->
+    <g opacity="0.08" stroke="#f5d77f" stroke-width="1.5">
+      <line x1="300" y1="60" x2="300" y2="540" />
+      <line x1="60" y1="300" x2="540" y2="300" />
+      <line x1="130" y1="130" x2="470" y2="470" />
+      <line x1="130" y1="470" x2="470" y2="130" />
+      <line x1="80" y1="210" x2="520" y2="390" />
+      <line x1="80" y1="390" x2="520" y2="210" />
+      <line x1="210" y1="80" x2="390" y2="520" />
+      <line x1="390" y1="80" x2="210" y2="520" />
+    </g>
+
+    <!-- Inner Golden Crest Ring -->
+    <circle cx="300" cy="275" r="165" fill="none" stroke="url(#gold-rim)" stroke-width="3" opacity="0.5" />
+    <circle cx="300" cy="275" r="169" fill="none" stroke="#e5b842" stroke-width="1" opacity="0.3" />
+  </g>
+
+  <!-- Steam Elements (Warm Golden Curves) -->
+  <g opacity="0.85">
+    <path d="M 270 215 C 260 180, 290 150, 275 110 C 265 85, 275 65, 280 55" fill="none" stroke="url(#gold-rim)" stroke-width="5" stroke-linecap="round" opacity="0.75" />
+    <path d="M 300 205 C 315 170, 285 140, 305 95 C 315 75, 305 60, 300 50" fill="none" stroke="#faedd0" stroke-width="6" stroke-linecap="round" opacity="0.9" />
+    <path d="M 330 215 C 345 180, 315 155, 330 115 C 340 90, 335 70, 325 58" fill="none" stroke="url(#gold-rim)" stroke-width="4.5" stroke-linecap="round" opacity="0.7" />
+    
+    <!-- Sparkles / Aroma motes -->
+    <circle cx="265" cy="140" r="2.5" fill="#ffd700" />
+    <circle cx="340" cy="130" r="3" fill="#ffeaa7" />
+    <circle cx="310" cy="80" r="2" fill="#ffd700" />
+    <circle cx="280" cy="95" r="2" fill="#fff" />
+  </g>
+
+  <!-- Espresso Cup & Saucer -->
+  <g id="espresso-cup">
+    <!-- Saucer Drop Shadow -->
+    <ellipse cx="300" cy="342" rx="145" ry="32" fill="#000000" opacity="0.5" filter="url(#badge-shadow)" />
+
+    <!-- Saucer Plate Outer Rim -->
+    <ellipse cx="300" cy="336" rx="142" ry="28" fill="url(#gold-rim)" />
+    <!-- Saucer Plate Ceramic Body -->
+    <ellipse cx="300" cy="334" rx="138" ry="25" fill="url(#cup-grad)" />
+    <ellipse cx="300" cy="335" rx="110" ry="18" fill="#dfd3c3" />
+    <ellipse cx="300" cy="336" rx="88" ry="13" fill="#c4b5a2" />
+
+    <!-- Cup Handle -->
+    <path d="M 370 250 C 420 250, 420 310, 365 310" fill="none" stroke="url(#cup-grad)" stroke-width="18" stroke-linecap="round" />
+    <path d="M 370 250 C 410 250, 410 310, 365 310" fill="none" stroke="#fbf9f5" stroke-width="12" stroke-linecap="round" />
+
+    <!-- Cup Body -->
+    <path d="M 215 240 Q 218 318 260 326 Q 300 330 340 326 Q 382 318 385 240 Z" fill="url(#cup-grad)" stroke="#dcd1c4" stroke-width="1" />
+    
+    <!-- Cup Rim Top Ellipse -->
+    <ellipse cx="300" cy="240" rx="85" ry="24" fill="#fcfbf9" stroke="#b8a896" stroke-width="1.5" />
+    
+    <!-- Espresso Coffee Surface -->
+    <ellipse cx="300" cy="243" rx="78" ry="20" fill="url(#crema-grad)" />
+
+    <!-- Latte Art / Crema Heart Detail -->
+    <g transform="translate(300, 243) scale(0.68)">
+      <!-- Golden swirl ring -->
+      <ellipse cx="0" cy="0" rx="65" ry="17" fill="none" stroke="#e09d43" stroke-width="3" opacity="0.6" stroke-dasharray="14 10" />
+      
+      <!-- Crema Heart -->
+      <path d="M 0 -7 C -18 -20, -38 0, 0 24 C 38 0, 18 -20, 0 -7 Z" fill="#fff8e7" opacity="0.95" />
+      <path d="M 0 -4 C -12 -14, -26 0, 0 18 C 26 0, 12 -14, 0 -4 Z" fill="#f4d4a4" opacity="0.75" />
+      <path d="M 0 -9 L 0 26" stroke="#965416" stroke-width="2.5" stroke-linecap="round" opacity="0.8" />
+    </g>
+
+    <!-- Subtle Cup Highlight / Gloss -->
+    <path d="M 226 248 C 228 290, 245 312, 255 317 C 245 308, 236 285, 234 248 Z" fill="#ffffff" opacity="0.6" />
+    
+    <!-- Cup Brand Emblem Stamp (Mini Bean) -->
+    <ellipse cx="300" cy="285" rx="8" ry="11" fill="url(#gold-rim)" transform="rotate(-15 300 285)" />
+    <path d="M 297 277 Q 303 285 299 293" fill="none" stroke="#2a150c" stroke-width="1.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Stars Row Above Cup -->
+  <g fill="url(#gold-rim)" filter="url(#gold-glow)">
+    <!-- Center star -->
+    <polygon points="300,165 305,178 318,178 308,187 312,200 300,191 288,200 292,187 282,178 295,178" />
+    <!-- Left star -->
+    <polygon points="255,175 259,185 270,185 261,192 264,202 255,195 246,202 249,192 240,185 251,185" transform="scale(0.85) translate(45, 30)" />
+    <!-- Right star -->
+    <polygon points="345,175 349,185 360,185 351,192 354,202 345,195 336,202 339,192 330,185 341,185" transform="scale(0.85) translate(60, 30)" />
+  </g>
+
+  <!-- Main Banner Ribbon for TYCOON -->
+  <g id="ribbon-banner" filter="url(#badge-shadow)">
+    <!-- Ribbon Tail Left -->
+    <path d="M 60 415 L 120 380 L 120 440 L 60 460 L 85 435 Z" fill="#4d0e0a" stroke="url(#gold-rim)" stroke-width="2" />
+    <!-- Ribbon Tail Right -->
+    <path d="M 540 415 L 480 380 L 480 440 L 540 460 L 515 435 Z" fill="#4d0e0a" stroke="url(#gold-rim)" stroke-width="2" />
+    
+    <!-- Ribbon Under-folds -->
+    <polygon points="105,420 120,380 145,420" fill="#300705" />
+    <polygon points="495,420 480,380 455,420" fill="#300705" />
+
+    <!-- Ribbon Front Body Arc -->
+    <path d="M 95 410 Q 300 445 505 410 L 495 465 Q 300 500 105 465 Z" fill="url(#ribbon-grad)" stroke="url(#gold-rim)" stroke-width="3" />
+    
+    <!-- Ribbon Border Inner Stitching -->
+    <path d="M 108 418 Q 300 452 492 418" fill="none" stroke="#fcd975" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8" />
+    <path d="M 115 457 Q 300 491 485 457" fill="none" stroke="#fcd975" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8" />
+  </g>
+
+  <!-- Typography: ESPRESSO -->
+  <g filter="url(#text-shadow)">
+    <text font-family="'Cinzel', 'Trajan Pro', 'Georgia', 'Playfair Display', serif" font-weight="900" font-size="44" fill="url(#gold-text)" letter-spacing="6" text-anchor="middle">
+      <textPath href="#espresso-path" startOffset="50%">ESPRESSO</textPath>
+    </text>
+  </g>
+  <defs>
+    <!-- Curved path for ESPRESSO -->
+    <path id="espresso-path" d="M 120 180 Q 300 100 480 180" fill="none" />
+  </defs>
+
+  <!-- Typography: TYCOON on Ribbon -->
+  <g filter="url(#text-shadow)">
+    <text x="300" y="455" font-family="'Montserrat', 'Arial Black', 'Trebuchet MS', sans-serif" font-weight="900" font-size="44" fill="url(#gold-text)" letter-spacing="9" text-anchor="middle">TYCOON</text>
+  </g>
+
+  <!-- 3D Gold Pill / Badge for "3D" -->
+  <g transform="translate(300, 502)" filter="url(#badge-shadow)">
+    <!-- Pill background -->
+    <rect x="-65" y="-18" width="130" height="36" rx="18" fill="#180b06" stroke="url(#gold-rim)" stroke-width="3" />
+    <!-- Interior shine -->
+    <rect x="-61" y="-14" width="122" height="15" rx="8" fill="#ffffff" opacity="0.12" />
+    
+    <!-- Text "3D" with 3D extrude look -->
+    <text x="1" y="9" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="28" fill="#583c07" letter-spacing="4" text-anchor="middle">3D</text>
+    <text x="0" y="7" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="28" fill="url(#gold-text)" letter-spacing="4" text-anchor="middle">3D</text>
+  </g>
+
+  <!-- Ornate Corner Wheat / Laurel Sprigs -->
+  <g stroke="url(#gold-rim)" stroke-width="2" fill="url(#gold-rim)" opacity="0.85">
+    <!-- Left laurel -->
+    <path d="M 115 320 C 105 270, 120 220, 150 180" fill="none" stroke-width="2.5" />
+    <circle cx="112" cy="305" r="5" />
+    <circle cx="107" cy="275" r="5" />
+    <circle cx="114" cy="245" r="5" />
+    <circle cx="130" cy="215" r="5" />
+    <circle cx="148" cy="188" r="5" />
+    
+    <!-- Right laurel -->
+    <path d="M 485 320 C 495 270, 480 220, 450 180" fill="none" stroke-width="2.5" />
+    <circle cx="488" cy="305" r="5" />
+    <circle cx="493" cy="275" r="5" />
+    <circle cx="486" cy="245" r="5" />
+    <circle cx="470" cy="215" r="5" />
+    <circle cx="452" cy="188" r="5" />
+  </g>
+</svg>
