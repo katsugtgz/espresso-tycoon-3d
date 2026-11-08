@@ -1,0 +1,220 @@
+.github/workflows/ci.yml
+  h_cc1f32aec57e6b 1-20
+.github/workflows/deploy.yml
+  h_cc1f32aec57e6b 1-41
+.gitignore
+  h_cc1f32aec57e6b 1-3
+README.md
+  h_cc1f32aec57e6b 1-84
+evals/README.md
+  h_cc1f32aec57e6b 1-179
+evals/bots/fps-budget.ts
+  h_cc1f32aec57e6b 1-49
+evals/bots/greedy.ts
+  h_cc1f32aec57e6b 1-91
+evals/bots/helpers.ts
+  h_cc1f32aec57e6b 1-48
+evals/bots/idle.ts
+  h_cc1f32aec57e6b 1-35
+evals/bots/index.ts
+  h_cc1f32aec57e6b 1-24
+evals/bots/keyboard.ts
+  h_cc1f32aec57e6b 1-69
+evals/bots/random-clicker.ts
+  h_cc1f32aec57e6b 1-85
+evals/bots/resize-blur.ts
+  h_cc1f32aec57e6b 1-69
+evals/bots/save-load.ts
+  h_cc1f32aec57e6b 1-86
+evals/bots/speedrun.ts
+  h_cc1f32aec57e6b 1-62
+evals/bots/tutorial.ts
+  h_cc1f32aec57e6b 1-101
+evals/bots/upgrade-spammer.ts
+  h_cc1f32aec57e6b 1-70
+evals/run.ts
+  h_cc1f32aec57e6b 1-403
+evals/scenarios/fps-budget.json
+  h_cc1f32aec57e6b 1-13
+evals/scenarios/greedy-optimal.json
+  h_cc1f32aec57e6b 1-14
+evals/scenarios/idle.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/keyboard.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/random-clicker-fuzz.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/resize-blur.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/save-load.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/speedrun-10x.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/tutorial.json
+  h_cc1f32aec57e6b 1-12
+evals/scenarios/upgrade-spammer.json
+  h_cc1f32aec57e6b 1-12
+evals/tsconfig.json
+  h_cc1f32aec57e6b 1-13
+evals/types.ts
+  h_cc1f32aec57e6b 1-48
+index.html
+  h_cc1f32aec57e6b 1-18
+legacy/core/Audio.ts
+  h_cc1f32aec57e6b 1-320
+legacy/core/EventBus.ts
+  h_cc1f32aec57e6b 1-41
+legacy/core/GameState.ts
+  h_cc1f32aec57e6b 1-427
+legacy/game/EconomyManager.ts
+  h_cc1f32aec57e6b 1-266
+legacy/test-api/GameTestAPI.ts
+  h_cc1f32aec57e6b 1-415
+legacy/test-api/InvariantChecker.ts
+  h_cc1f32aec57e6b 1-250
+legacy/test-api/index.ts
+  h_cc1f32aec57e6b 1-2
+legacy/types/index.ts
+  h_cc1f32aec57e6b 1-112
+package-lock.json
+  h_cc1f32aec57e6b 1-1657
+package.json
+  h_cc1f32aec57e6b 1-22
+public/assets/americano.svg
+  h_cc1f32aec57e6b 1-59
+public/assets/cappuccino.svg
+  h_cc1f32aec57e6b 1-77
+public/assets/cold_brew.svg
+  h_cc1f32aec57e6b 1-109
+public/assets/espresso.svg
+  h_cc1f32aec57e6b 1-65
+public/assets/grinder.svg
+  h_cc1f32aec57e6b 1-87
+public/assets/latte.svg
+  h_cc1f32aec57e6b 1-80
+public/assets/logo.svg
+  h_cc1f32aec57e6b 1-219
+public/assets/machine.svg
+  h_cc1f32aec57e6b 1-129
+public/assets/mocha.svg
+  h_cc1f32aec57e6b 1-96
+scripts/capture-shots.mjs
+  h_cc1f32aec57e6b 1-92
+scripts/debug-page.mjs
+  h_cc1f32aec57e6b 1-38
+scripts/sim-smoke.ts
+  h_cc1f32aec57e6b 1-384
+src/appTypes.ts
+  h_cc1f32aec57e6b 1-43
+src/audio/AmbientGenerator.ts
+  h_cc1f32aec57e6b 1-198
+src/audio/AudioManager.ts
+  h_cc1f32aec57e6b 1-270
+src/audio/LofiMusicGenerator.ts
+  h_cc1f32aec57e6b 1-344
+src/audio/SoundEffects.ts
+  h_cc1f32aec57e6b 1-729
+src/audio/SynthContext.ts
+  h_cc1f32aec57e6b 1-259
+src/audio/index.ts
+  h_cc1f32aec57e6b 1-6
+src/audio/types.ts
+  h_cc1f32aec57e6b 1-34
+src/config/assets.ts
+  h_cc1f32aec57e6b 1-6
+src/config/balance.ts
+  h_cc1f32aec57e6b 1-76
+src/config/layout.ts
+  h_cc1f32aec57e6b 1-51
+src/core/events.ts
+  h_cc1f32aec57e6b 1-36
+src/core/rng.ts
+  h_cc1f32aec57e6b 1-14
+src/core/settings.ts
+  h_cc1f32aec57e6b 1-20
+src/main.ts
+  h_cc1f32aec57e6b 1-120
+src/render/BaristaView.ts
+  h_cc1f32aec57e6b 1-136
+src/render/CameraControls.ts
+  h_cc1f32aec57e6b 1-322
+src/render/CustomerView.ts
+  h_cc1f32aec57e6b 1-308
+src/render/EffectsManager.ts
+  h_cc1f32aec57e6b 1-268
+src/render/GameRenderer.ts
+  h_cc1f32aec57e6b 1-208
+src/render/ModelFactory.ts
+  h_cc1f32aec57e6b 1-1206
+src/render/PickingManager.ts
+  h_cc1f32aec57e6b 1-125
+src/render/SceneBuilder.ts
+  h_cc1f32aec57e6b 1-605
+src/render/StationView.ts
+  h_cc1f32aec57e6b 1-425
+src/render/TextureGenerator.ts
+  h_cc1f32aec57e6b 1-347
+src/sim/Simulation.ts
+  h_cc1f32aec57e6b 1-262
+src/sim/baristas.ts
+  h_cc1f32aec57e6b 1-77
+src/sim/customers.ts
+  h_cc1f32aec57e6b 1-370
+src/sim/economy.ts
+  h_cc1f32aec57e6b 1-295
+src/sim/progression.ts
+  h_cc1f32aec57e6b 1-214
+src/sim/save.ts
+  h_cc1f32aec57e6b 1-138
+src/sim/state.ts
+  h_cc1f32aec57e6b 1-120
+src/sim/stations.ts
+  h_cc1f32aec57e6b 1-290
+src/sim/tutorial.ts
+  h_cc1f32aec57e6b 1-29
+src/testapi/index.ts
+  h_cc1f32aec57e6b 1-3
+src/testapi/install.ts
+  h_cc1f32aec57e6b 1-289
+src/testapi/invariants.ts
+  h_cc1f32aec57e6b 1-359
+src/testapi/types.ts
+  h_cc1f32aec57e6b 1-148
+src/types.ts
+  h_cc1f32aec57e6b 1-264
+src/ui/UIManager.ts
+  h_cc1f32aec57e6b 1-180
+src/ui/hud.ts
+  h_cc1f32aec57e6b 1-509
+src/ui/keyboard.ts
+  h_cc1f32aec57e6b 1-129
+src/ui/menus.ts
+  h_cc1f32aec57e6b 1-629
+src/ui/popups.ts
+  h_cc1f32aec57e6b 1-343
+src/ui/settings.ts
+  h_cc1f32aec57e6b 1-322
+src/ui/shop.ts
+  h_cc1f32aec57e6b 1-372
+src/ui/styles.css
+  h_cc1f32aec57e6b 1-1430
+src/ui/tutorial.ts
+  h_cc1f32aec57e6b 1-172
+src/vite-env.d.ts
+  h_cc1f32aec57e6b 1
+tsconfig.json
+  h_cc1f32aec57e6b 1-19
+vite.config.ts
+  h_cc1f32aec57e6b 1-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a33da0289d9007a4bde16b4545bfe00e6e17c88a",
+  "prompts": {},
+  "humans": {
+    "h_cc1f32aec57e6b": {
+      "author": "Muhammad Naufal Mahdi <053792227@ecampus.ut.ac.id>"
+    }
+  }
+}
