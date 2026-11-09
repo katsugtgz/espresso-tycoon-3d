@@ -131,6 +131,15 @@ check(emptyOrderLoaded === false, 'orders [{}]: load rejects malformed order ent
 function validOrder(): Record<string, unknown> {
   return { id: 7, customerId: 8, drink: 'espresso', status: 'pending', createdAt: 1, price: 3, machineId: null };
 }
+
+// Positive control: a well-formed order loads, so each rejection below
+// fails only for its own reason.
+const goodOrder = dirtyState() as unknown as Record<string, unknown>;
+goodOrder.orders = [validOrder()];
+const simGood = new Simulation(new EventBus<GameEvents>());
+check(simGood.load(goodOrder), 'load accepts save with well-formed order');
+check(simGood.serialize().orders.length === 1, 'well-formed order survives load');
+
 const infMachine = dirtyState() as unknown as Record<string, unknown>;
 infMachine.orders = [{ ...validOrder(), machineId: Infinity }];
 const simInf = new Simulation(new EventBus<GameEvents>());
