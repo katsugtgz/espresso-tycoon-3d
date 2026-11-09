@@ -72,4 +72,31 @@ const sw = simMalformed.serialize();
 check(sw.machines[0].status === 'idle', 'malformed orders: dangling machine repaired to idle');
 check(sw.machines[0].orderId === null, 'malformed orders: dangling machine orderId cleared');
 
+// Malformed machine entry: machines [null] must not throw. A non-object
+// machine snap cannot be repaired without inventing a slot-indexed snap,
+// so the seam-consistent behavior is to reject the save (load -> false),
+// matching how corrupted data is rejected elsewhere at this seam.
+const nullMachine = dirtyState() as unknown as Record<string, unknown>;
+nullMachine.machines = [null];
+const simNullMachine = new Simulation(new EventBus<GameEvents>());
+let nullMachineThrew = false;
+let nullMachineLoaded = true;
+try {
+  nullMachineLoaded = simNullMachine.load(nullMachine);
+} catch {
+  nullMachineThrew = true;
+}
+check(!nullMachineThrew, 'machines [null]: load must not throw');
+check(nullMachineLoaded === false, 'machines [null]: load rejects non-object machine entries');
+
+// Malformed order entry: orders [null] must not throw either — a null entry
+// simply contributes no id, so the dangling machine is still repaired.
+const nullOrderEntry = dirtyState() as unknown as Record<string, unknown>;
+nullOrderEntry.orders = [null];
+const simNullOrder = new Simulation(new EventBus<GameEvents>());
+check(simNullOrder.load(nullOrderEntry), 'load accepts save with null order entry');
+const sn = simNullOrder.serialize();
+check(sn.machines[0].status === 'idle', 'null order entry: dangling machine repaired to idle');
+check(sn.machines[0].orderId === null, 'null order entry: dangling machine orderId cleared');
+
 console.log('ok: ISim load owns machine_order_missing');

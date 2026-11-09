@@ -75,7 +75,13 @@ export function migrate(data: unknown): GameState | null {
       // Own machine_order_missing at this seam: a machine brewing a nonexistent
       // order can never run again, so reset it to idle instead of loading it.
       if (Array.isArray(state.machines)) {
-        const orderIds = new Set(Array.isArray(state.orders) ? state.orders.map((o) => o.id) : []);
+        // A machine snap is slot-indexed state; a non-object entry cannot be
+        // repaired without inventing a snap, so reject the save like other
+        // corrupted data at this seam instead of throwing on dereference.
+        if (state.machines.some((m) => typeof m !== 'object' || m === null)) return null;
+        const orderIds = new Set(
+          (Array.isArray(state.orders) ? state.orders : []).filter((o) => typeof o === 'object' && o !== null).map((o) => o.id)
+        );
         for (const m of state.machines) {
           if (m.orderId !== null && !orderIds.has(m.orderId)) {
             resetMachine(m);
