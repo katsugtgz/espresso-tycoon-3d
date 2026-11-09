@@ -123,4 +123,41 @@ try {
 check(!emptyOrderThrew, 'orders [{}]: load must not throw');
 check(emptyOrderLoaded === false, 'orders [{}]: load rejects malformed order entries');
 
+// P2 (review a2c8f8e1): Infinity machineId is rejected — JSON 1e400 parses
+// to Infinity and typeof passes, and the stale pointer would strand a
+// machine brewing on customer timeout. (migrate() JSON-clones state, and
+// JSON maps Infinity -> null, so a post-clone check would miss it: validate
+// the raw payload before cloning.)
+function validOrder(): Record<string, unknown> {
+  return { id: 7, customerId: 8, drink: 'espresso', status: 'pending', createdAt: 1, price: 3, machineId: null };
+}
+const infMachine = dirtyState() as unknown as Record<string, unknown>;
+infMachine.orders = [{ ...validOrder(), machineId: Infinity }];
+const simInf = new Simulation(new EventBus<GameEvents>());
+let infThrew = false;
+let infLoaded = true;
+try {
+  infLoaded = simInf.load(infMachine);
+} catch {
+  infThrew = true;
+}
+check(!infThrew, 'orders [Infinity machineId]: load must not throw');
+check(infLoaded === false, 'orders [Infinity machineId]: load rejects non-finite machineId');
+
+// P2 (review a2c8f8e1): inherited drink names are rejected — 'constructor'
+// passes `in DRINKS` via the prototype chain, and brewing it reads
+// undefined cost and NaNs state.money.
+const protoDrink = dirtyState() as unknown as Record<string, unknown>;
+protoDrink.orders = [{ ...validOrder(), drink: 'constructor' }];
+const simProto = new Simulation(new EventBus<GameEvents>());
+let protoThrew = false;
+let protoLoaded = true;
+try {
+  protoLoaded = simProto.load(protoDrink);
+} catch {
+  protoThrew = true;
+}
+check(!protoThrew, 'orders [constructor drink]: load must not throw');
+check(protoLoaded === false, 'orders [constructor drink]: load rejects inherited drink names');
+
 console.log('ok: ISim load owns machine_order_missing');

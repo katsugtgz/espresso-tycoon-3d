@@ -18,13 +18,13 @@ function isOrderSnap(o: unknown): o is GameState['orders'][number] {
     typeof e.id === 'number' &&
     typeof e.customerId === 'number' &&
     typeof e.drink === 'string' &&
-    e.drink in DRINKS &&
+    Object.prototype.hasOwnProperty.call(DRINKS, e.drink) &&
     (e.status === 'pending' || e.status === 'brewing' || e.status === 'ready') &&
     typeof e.createdAt === 'number' &&
     Number.isFinite(e.createdAt) &&
     typeof e.price === 'number' &&
     Number.isFinite(e.price) &&
-    (typeof e.machineId === 'number' || e.machineId === null)
+    (e.machineId === null || (typeof e.machineId === 'number' && Number.isFinite(e.machineId)))
   );
 }
 
@@ -83,6 +83,17 @@ export function migrate(data: unknown): GameState | null {
   // Case 1: Version 2 save
   if (raw.version === SAVE_VERSION || payload.version === SAVE_VERSION) {
     if (typeof payload.money === 'number' && typeof payload.day === 'number' && Array.isArray(payload.unlockedDrinks)) {
+      // Raw-order validation (pre-clone): JSON cloning maps non-finite
+      // numbers (Infinity/NaN from 1e400-style payloads) to null, hiding
+      // them from post-clone checks — so validate the raw entries here.
+      // A bogus ticket would crash sim/HUD next frame and cannot be
+      // dropped without rewriting order indexing, so any failure rejects
+      // the save. A missing/non-array list means every machine orderId
+      // dangles, hence the empty set after cloning.
+      if (payload.orders !== undefined && payload.orders !== null) {
+        if (!Array.isArray(payload.orders)) payload.orders = [];
+        else if ((payload.orders as unknown[]).some((o: unknown) => !isOrderSnap(o))) return null;
+      }
       const state = JSON.parse(JSON.stringify(payload)) as GameState;
       // Guard all critical numerical fields
       state.money = Number.isFinite(state.money) ? state.money : BALANCE.startMoney;
@@ -98,14 +109,10 @@ export function migrate(data: unknown): GameState | null {
         // repaired without inventing a snap, so reject the save like other
         // corrupted data at this seam instead of throwing on dereference.
         if (state.machines.some((m) => typeof m !== 'object' || m === null)) return null;
-        // Orders are live queue state: a bogus ticket would crash sim/HUD
-        // next frame and cannot be dropped without rewriting order indexing,
-        // so each entry must be a well-formed OrderSnap or the save is
-        // rejected. A missing/non-array list means every machine orderId
-        // dangles, hence the empty set below.
+        // Orders were validated pre-clone (non-finite-safe); a missing list
+        // means every machine orderId dangles, hence the empty set below.
         if (state.orders === undefined || state.orders === null) state.orders = [];
         else if (!Array.isArray(state.orders)) state.orders = [];
-        else if (state.orders.some((o) => !isOrderSnap(o))) return null;
         // Only numeric ids confer membership: a machine with a missing
         // orderId must not match via undefined.
         const orderIds = new Set(state.orders.map((o) => o.id));
