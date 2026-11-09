@@ -106,18 +106,21 @@ try {
 check(!nullOrderThrew, 'orders [null]: load must not throw');
 check(nullOrderLoaded === false, 'orders [null]: load rejects non-object order entries');
 
-// P2: an order object without a numeric id confers no membership — a machine
-// with a missing orderId must still be repaired to idle, not stay brewing
-// on an undefined === undefined match.
-const noIdOrder = dirtyState() as unknown as Record<string, unknown>;
-noIdOrder.orders = [{}];
-const noIdMachines = noIdOrder.machines as Array<Record<string, unknown>>;
-noIdMachines[0].status = 'brewing';
-noIdMachines[0].orderId = undefined;
-const simNoId = new Simulation(new EventBus<GameEvents>());
-check(simNoId.load(noIdOrder), 'load accepts save with id-less order object');
-const si = simNoId.serialize();
-check(si.machines[0].status === 'idle', 'id-less order: machine with missing orderId repaired to idle');
-check(si.machines[0].orderId === null, 'id-less order: missing orderId cleared to null');
+// P2 (review 6029361d): malformed-but-object order entries are rejected —
+// `{}` would otherwise sit in the active queue as a bogus ticket and crash
+// sim/HUD next frame, so migrate() returns null (load -> false) like other
+// corrupted data at this seam.
+const emptyOrder = dirtyState() as unknown as Record<string, unknown>;
+emptyOrder.orders = [{}];
+const simEmptyOrder = new Simulation(new EventBus<GameEvents>());
+let emptyOrderThrew = false;
+let emptyOrderLoaded = true;
+try {
+  emptyOrderLoaded = simEmptyOrder.load(emptyOrder);
+} catch {
+  emptyOrderThrew = true;
+}
+check(!emptyOrderThrew, 'orders [{}]: load must not throw');
+check(emptyOrderLoaded === false, 'orders [{}]: load rejects malformed order entries');
 
 console.log('ok: ISim load owns machine_order_missing');

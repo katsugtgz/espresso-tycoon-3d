@@ -9,6 +9,25 @@ interface SaveEnvelope {
   state: GameState;
 }
 
+// OrderSnap field guard: every field the sim/HUD dereferences next frame
+// must be present with a sane type, else the ticket is bogus.
+function isOrderSnap(o: unknown): o is GameState['orders'][number] {
+  if (typeof o !== 'object' || o === null) return false;
+  const e = o as Record<string, unknown>;
+  return (
+    typeof e.id === 'number' &&
+    typeof e.customerId === 'number' &&
+    typeof e.drink === 'string' &&
+    e.drink in DRINKS &&
+    (e.status === 'pending' || e.status === 'brewing' || e.status === 'ready') &&
+    typeof e.createdAt === 'number' &&
+    Number.isFinite(e.createdAt) &&
+    typeof e.price === 'number' &&
+    Number.isFinite(e.price) &&
+    (typeof e.machineId === 'number' || e.machineId === null)
+  );
+}
+
 export function saveGame(state: GameState): boolean {
   if (typeof localStorage === 'undefined') return false;
   try {
@@ -79,18 +98,17 @@ export function migrate(data: unknown): GameState | null {
         // repaired without inventing a snap, so reject the save like other
         // corrupted data at this seam instead of throwing on dereference.
         if (state.machines.some((m) => typeof m !== 'object' || m === null)) return null;
-        // Orders are live queue state: a non-object entry would crash sim/HUD
+        // Orders are live queue state: a bogus ticket would crash sim/HUD
         // next frame and cannot be dropped without rewriting order indexing,
-        // so reject the save. A missing/non-array list means every machine
-        // orderId dangles, hence the empty set below.
+        // so each entry must be a well-formed OrderSnap or the save is
+        // rejected. A missing/non-array list means every machine orderId
+        // dangles, hence the empty set below.
         if (state.orders === undefined || state.orders === null) state.orders = [];
         else if (!Array.isArray(state.orders)) state.orders = [];
-        else if (state.orders.some((o) => typeof o !== 'object' || o === null)) return null;
-        // Only numeric ids confer membership: an id-less order object must
-        // not match a machine with a missing orderId via undefined.
-        const orderIds = new Set(
-          state.orders.filter((o) => typeof o.id === 'number').map((o) => o.id)
-        );
+        else if (state.orders.some((o) => !isOrderSnap(o))) return null;
+        // Only numeric ids confer membership: a machine with a missing
+        // orderId must not match via undefined.
+        const orderIds = new Set(state.orders.map((o) => o.id));
         for (const m of state.machines) {
           if (m.orderId !== null && !orderIds.has(m.orderId as number)) {
             resetMachine(m);
