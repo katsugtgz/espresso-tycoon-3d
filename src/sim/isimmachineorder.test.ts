@@ -89,14 +89,35 @@ try {
 check(!nullMachineThrew, 'machines [null]: load must not throw');
 check(nullMachineLoaded === false, 'machines [null]: load rejects non-object machine entries');
 
-// Malformed order entry: orders [null] must not throw either — a null entry
-// simply contributes no id, so the dangling machine is still repaired.
+// P1: non-object order entries are rejected at the load seam — a null entry
+// would crash sim/HUD next frame, and silently dropping it would rewrite
+// order indexing, so migrate() returns null (load -> false) like other
+// corrupted data at this seam.
 const nullOrderEntry = dirtyState() as unknown as Record<string, unknown>;
 nullOrderEntry.orders = [null];
 const simNullOrder = new Simulation(new EventBus<GameEvents>());
-check(simNullOrder.load(nullOrderEntry), 'load accepts save with null order entry');
-const sn = simNullOrder.serialize();
-check(sn.machines[0].status === 'idle', 'null order entry: dangling machine repaired to idle');
-check(sn.machines[0].orderId === null, 'null order entry: dangling machine orderId cleared');
+let nullOrderThrew = false;
+let nullOrderLoaded = true;
+try {
+  nullOrderLoaded = simNullOrder.load(nullOrderEntry);
+} catch {
+  nullOrderThrew = true;
+}
+check(!nullOrderThrew, 'orders [null]: load must not throw');
+check(nullOrderLoaded === false, 'orders [null]: load rejects non-object order entries');
+
+// P2: an order object without a numeric id confers no membership — a machine
+// with a missing orderId must still be repaired to idle, not stay brewing
+// on an undefined === undefined match.
+const noIdOrder = dirtyState() as unknown as Record<string, unknown>;
+noIdOrder.orders = [{}];
+const noIdMachines = noIdOrder.machines as Array<Record<string, unknown>>;
+noIdMachines[0].status = 'brewing';
+noIdMachines[0].orderId = undefined;
+const simNoId = new Simulation(new EventBus<GameEvents>());
+check(simNoId.load(noIdOrder), 'load accepts save with id-less order object');
+const si = simNoId.serialize();
+check(si.machines[0].status === 'idle', 'id-less order: machine with missing orderId repaired to idle');
+check(si.machines[0].orderId === null, 'id-less order: missing orderId cleared to null');
 
 console.log('ok: ISim load owns machine_order_missing');

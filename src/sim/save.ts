@@ -79,11 +79,20 @@ export function migrate(data: unknown): GameState | null {
         // repaired without inventing a snap, so reject the save like other
         // corrupted data at this seam instead of throwing on dereference.
         if (state.machines.some((m) => typeof m !== 'object' || m === null)) return null;
+        // Orders are live queue state: a non-object entry would crash sim/HUD
+        // next frame and cannot be dropped without rewriting order indexing,
+        // so reject the save. A missing/non-array list means every machine
+        // orderId dangles, hence the empty set below.
+        if (state.orders === undefined || state.orders === null) state.orders = [];
+        else if (!Array.isArray(state.orders)) state.orders = [];
+        else if (state.orders.some((o) => typeof o !== 'object' || o === null)) return null;
+        // Only numeric ids confer membership: an id-less order object must
+        // not match a machine with a missing orderId via undefined.
         const orderIds = new Set(
-          (Array.isArray(state.orders) ? state.orders : []).filter((o) => typeof o === 'object' && o !== null).map((o) => o.id)
+          state.orders.filter((o) => typeof o.id === 'number').map((o) => o.id)
         );
         for (const m of state.machines) {
-          if (m.orderId !== null && !orderIds.has(m.orderId)) {
+          if (m.orderId !== null && !orderIds.has(m.orderId as number)) {
             resetMachine(m);
           }
         }
