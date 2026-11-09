@@ -1,17 +1,28 @@
-import type { GameState, DrinkId, StationId, ActionResult, OrderSnap, MachineSnap } from '../types';
+// Layer 1 — STATION ACTIONS (mutate state + emit).
+// Pure math lives in rules/pricing.ts + rules/brew.ts + rules/money.ts.
+// Direction: stations -> rules/*, progression, tutorial. Never economy/customers.
+import type { GameState, DrinkId, StationId, StationIntent, ActionResult, OrderSnap, MachineSnap } from '../types';
+
 import type { EventBus } from '../core/events';
 import type { GameEvents } from '../types';
-import { DRINKS, BALANCE } from '../config/balance';
+import { DRINKS } from '../config/balance';
 import { LAYOUT } from '../config/layout';
-import { calculateTip } from './economy';
-import { advanceTutorial } from './tutorial';
 import { updateGoalsProgress, checkAchievements } from './progression';
+import {
+  brewTimeFor,
+  tipFor,
+  revenueFor,
+  totalFor,
+  ratingDeltaFor,
+  ratingCeilingFor,
+  applyRatingGain,
+} from './rules/pricing';
+import { oldestPendingOrderAny, oldestPendingOrderFor, firstIdleMachine } from './rules/brew';
+import { round2 } from './rules/money';
+import { reportTutorialEvent } from './tutorial';
 
 export function getBrewTime(state: GameState, drink: DrinkId): number {
-  const basePrep = DRINKS[drink]?.prepTime ?? 3;
-  const grinderSpeed = BALANCE.grinderSpeedPerLevel * (state.upgrades.grinder ?? 0);
-  const mult = Math.max(0.2, 1 - grinderSpeed);
-  return Math.max(0.5, basePrep * mult);
+  return brewTimeFor(drink, state.upgrades.grinder ?? 0);
 }
 
 export function startBrewingOrder(
@@ -26,8 +37,8 @@ export function startBrewingOrder(
 
   // Deduct ingredient cost
   const cost = drinkDef.ingredientCost;
-  state.money = Math.round((state.money - cost) * 100) / 100;
-  state.dayStats.expenses = Math.round((state.dayStats.expenses + cost) * 100) / 100;
+  state.money = round2(state.money - cost);
+  state.dayStats.expenses = round2(state.dayStats.expenses + cost);
 
   const machinePos = LAYOUT.machineSlots[machine.id] ?? LAYOUT.counter;
   bus.emit('money:change', {
@@ -54,10 +65,8 @@ export function startBrewingOrder(
     byBarista,
   });
 
-  // Tutorial progression
-  if (state.tutorial.active && state.tutorial.step === 1) {
-    advanceTutorial(state, bus, 2);
-  }
+  // Tutorial progression (event-driven: only step 1 advances on brew_started)
+  reportTutorialEvent(state, bus, 'brew_started');
 
   return { ok: true };
 }
@@ -99,25 +108,30 @@ export function serveMachine(
     return { ok: false, reason: 'customer_left' };
   }
 
-  // Calculate pricing & tip
+  // Calculate pricing & tip (pure rules)
   const isVip = customer.kind === 'vip';
-  const priceMult = isVip ? 2 : 1;
-  const revenue = Math.round(order.price * priceMult * 100) / 100;
+  const revenue = revenueFor(order.price, isVip);
   const hasSeats = state.seats.length > 0;
-  const tip = calculateTip(order, customer, state.combo, hasSeats);
-  const totalPaid = Math.round((revenue + tip) * 100) / 100;
+  const tip = tipFor({
+    basePrice: order.price,
+    patience: customer.patience,
+    combo: state.combo,
+    kind: customer.kind,
+    hasSeating: hasSeats,
+  });
+  const totalPaid = totalFor(revenue, tip);
 
-  state.money = Math.round((state.money + totalPaid) * 100) / 100;
-  state.dayStats.revenue = Math.round((state.dayStats.revenue + revenue) * 100) / 100;
-  state.dayStats.tips = Math.round((state.dayStats.tips + tip) * 100) / 100;
+  state.money = round2(state.money + totalPaid);
+  state.dayStats.revenue = round2(state.dayStats.revenue + revenue);
+  state.dayStats.tips = round2(state.dayStats.tips + tip);
   state.dayStats.served++;
 
   state.stats.totalServed++;
-  state.stats.totalRevenue = Math.round((state.stats.totalRevenue + revenue) * 100) / 100;
-  state.stats.totalTips = Math.round((state.stats.totalTips + tip) * 100) / 100;
+  state.stats.totalRevenue = round2(state.stats.totalRevenue + revenue);
+  state.stats.totalTips = round2(state.stats.totalTips + tip);
 
   if (state.dayStats.timeToFirstSale === null) {
-    state.dayStats.timeToFirstSale = Math.round(state.dayTime * 100) / 100;
+    state.dayStats.timeToFirstSale = round2(state.dayTime);
   }
 
   // Combo
@@ -130,16 +144,13 @@ export function serveMachine(
   }
   bus.emit('combo:change', { combo: state.combo });
 
-  // Rating boost: +0.02..0.05
-  const ratingDelta = 0.02 + 0.03 * Math.max(0, Math.min(1, customer.patience));
-  const ratingCeiling = Math.min(5.0, 3.5 + state.upgrades.decor * 0.2);
-  if (state.rating < ratingCeiling) {
-    const oldRating = state.rating;
-    state.rating = Math.min(ratingCeiling, Math.round((state.rating + ratingDelta) * 100) / 100);
-    const actualDelta = Math.round((state.rating - oldRating) * 100) / 100;
-    if (actualDelta > 0) {
-      bus.emit('rating:change', { rating: state.rating, delta: actualDelta });
-    }
+  // Rating boost
+  const ratingDelta = ratingDeltaFor(customer.patience);
+  const ratingCeiling = ratingCeilingFor(state.upgrades.decor);
+  const applied = applyRatingGain(state.rating, ratingDelta, ratingCeiling);
+  state.rating = applied.rating;
+  if (applied.actualDelta > 0) {
+    bus.emit('rating:change', { rating: state.rating, delta: applied.actualDelta });
   }
 
   // Emits
@@ -191,71 +202,97 @@ export function serveMachine(
     bus.emit('customer:emote', { id: customer.id, emote: 'happy' });
   }
 
-  // Tutorial check
-  if (state.tutorial.active && state.tutorial.step === 3) {
-    advanceTutorial(state, bus, 4);
-  }
+  // Tutorial progression (event-driven: only step 3 advances on order_served)
+  reportTutorialEvent(state, bus, 'order_served');
 
   updateGoalsProgress(state, bus);
   checkAchievements(state, bus);
 
   return { ok: true };
 }
+/**
+ * Parse a StationId string into a typed intent. Null means "not a
+ * well-formed station shape" (unknown prefix or non-string input).
+ * Existence/range checks (unknown machine id, out-of-range table index)
+ * stay in clickStationIntent, next to the branch ordering they belong to.
+ */
+export function parseStationId(stationId: StationId): StationIntent | null {
+  if (typeof stationId !== 'string') return null;
+  if (stationId === 'counter') return { kind: 'counter' };
+  if (stationId === 'register') return { kind: 'register' };
+  if (stationId === 'grinder') return { kind: 'grinder' };
+  if (stationId.startsWith('machine:')) {
+    return { kind: 'machine', id: parseInt(stationId.split(':')[1], 10) };
+  }
+  if (stationId.startsWith('table:')) {
+    return { kind: 'table', index: parseInt(stationId.split(':')[1], 10) };
+  }
+  return null;
+}
+
+/**
+ * Typed station intent: ordering over intents lives here, inside the sim
+ * module. String StationId parsing moves inward via parseStationId (above);
+ * the string-accepting clickStation edge delegates here so every click site
+ * flows through one ordering.
+ */
+export function clickStationIntent(
+  state: GameState,
+  bus: EventBus<GameEvents>,
+  intent: StationIntent,
+): ActionResult {
+  if (intent.kind === 'machine') {
+    const machine = state.machines.find((m) => m.id === intent.id);
+    if (!machine) return { ok: false, reason: 'invalid_station' };
+    if (machine.status === 'idle') {
+      const pendingOrder = oldestPendingOrderAny(state.orders);
+      if (!pendingOrder) return { ok: false, reason: 'no_order' };
+      return startBrewingOrder(state, bus, machine, pendingOrder, false);
+    }
+    if (machine.status === 'brewing') {
+      return { ok: false, reason: 'busy' };
+    }
+    if (machine.status === 'ready') {
+      return serveMachine(state, bus, machine.id, false);
+    }
+    return { ok: false, reason: 'unhandled_intent' };
+  }
+  if (intent.kind === 'counter' || intent.kind === 'register') {
+    const readyMachine = state.machines.find((m) => m.status === 'ready');
+    if (!readyMachine) return { ok: false, reason: 'no_ready_machine' };
+    return serveMachine(state, bus, readyMachine.id, false);
+  }
+  if (intent.kind === 'grinder') {
+    return { ok: true };
+  }
+  if (intent.kind === 'table') {
+    if (Number.isInteger(intent.index) && intent.index >= 0 && intent.index < Math.floor(state.seats.length / 2)) {
+      return { ok: true };
+    }
+    return { ok: false, reason: 'invalid_station' };
+  }
+  return { ok: false, reason: 'unhandled_intent' };
+}
+
 
 export function clickStation(
   state: GameState,
   bus: EventBus<GameEvents>,
   stationId: StationId
 ): ActionResult {
-  if (stationId.startsWith('machine:')) {
-    const rawId = stationId.split(':')[1];
-    const machineId = parseInt(rawId, 10);
-    const machine = state.machines.find((m) => m.id === machineId);
-    if (!machine) return { ok: false, reason: 'invalid_station' };
-
-    if (machine.status === 'idle') {
-      // Find oldest pending order
-      const pendingOrder = state.orders.find((o) => o.status === 'pending');
-      if (!pendingOrder) return { ok: false, reason: 'no_order' };
-      return startBrewingOrder(state, bus, machine, pendingOrder, false);
-    }
-
-    if (machine.status === 'brewing') {
-      return { ok: false, reason: 'busy' };
-    }
-
-    if (machine.status === 'ready') {
-      return serveMachine(state, bus, machine.id, false);
-    }
-  }
-
-  if (stationId === 'counter' || stationId === 'register') {
-    // Serve first ready machine
-    const readyMachine = state.machines.find((m) => m.status === 'ready');
-    if (!readyMachine) return { ok: false, reason: 'no_ready_machine' };
-    return serveMachine(state, bus, readyMachine.id, false);
-  }
-
-  if (stationId === 'grinder') {
-    return { ok: true };
-  }
-
-  if (stationId.startsWith('table:')) {
-    const rawIdx = stationId.split(':')[1];
-    const tIdx = parseInt(rawIdx, 10);
-    if (Number.isInteger(tIdx) && tIdx >= 0 && tIdx < Math.floor(state.seats.length / 2)) {
-      return { ok: true };
-    }
-  }
-
-  return { ok: false, reason: 'invalid_station' };
+  // Thin string edge: parsing + ordering live in parseStationId /
+  // clickStationIntent above. This keeps every existing caller working
+  // while the parsing depth moves inside the sim module.
+  const intent = parseStationId(stationId);
+  if (!intent) return { ok: false, reason: 'invalid_station' };
+  return clickStationIntent(state, bus, intent);
 }
 
 export function brewDrink(state: GameState, bus: EventBus<GameEvents>, drink: DrinkId): ActionResult {
-  const pendingOrder = state.orders.find((o) => o.status === 'pending' && o.drink === drink);
+  const pendingOrder = oldestPendingOrderFor(state.orders, drink);
   if (!pendingOrder) return { ok: false, reason: 'no_order' };
 
-  const idleMachine = state.machines.find((m) => m.status === 'idle');
+  const idleMachine = firstIdleMachine(state.machines);
   if (!idleMachine) return { ok: false, reason: 'no_machine' };
 
   return startBrewingOrder(state, bus, idleMachine, pendingOrder, false);
@@ -280,10 +317,8 @@ export function updateMachines(state: GameState, bus: EventBus<GameEvents>, dt: 
           orderId: machine.orderId!,
         });
 
-        // Tutorial check
-        if (state.tutorial.active && state.tutorial.step === 2) {
-          advanceTutorial(state, bus, 3);
-        }
+        // Tutorial progression (event-driven: only step 2 advances on brew_done)
+        reportTutorialEvent(state, bus, 'brew_done');
       }
     }
   }

@@ -1,0 +1,56 @@
+import { Simulation } from './Simulation';
+import { EventBus } from '../core/events';
+import { SAVE_VERSION } from '../config/balance';
+import type { GameEvents, GameState } from '../types';
+
+// Tracer: the ISim module owns machine_order_missing at its load seam.
+// A dangling machine.orderId must not survive load(); it is repaired to
+// idle so dispatch/advanceTime can never observe machine_order_missing.
+function check(cond: boolean, message: string): void {
+  if (!cond) {
+    throw new Error(`isimmachineorder: ${message}`);
+  }
+}
+
+function dirtyState(): GameState {
+  const setup = new Simulation(new EventBus<GameEvents>());
+  setup.dispatch({ type: 'newGame', seed: 42, tutorial: false });
+  const s = setup.serialize();
+  s.orders = [];
+  s.customers = [];
+  s.queue = [];
+  s.machines[0].status = 'brewing';
+  s.machines[0].orderId = 9999; // no such order
+  s.machines[0].drink = 'espresso';
+  s.machines[0].progress = 0.3;
+  s.machines[0].brewTime = 3;
+  s.machines[0].claimedBy = null;
+  s.version = SAVE_VERSION;
+  return s;
+}
+
+function hasDanglingMachineOrder(s: GameState): boolean {
+  const orderIds = new Set(s.orders.map((o) => o.id));
+  return s.machines.some((m) => m.orderId !== null && !orderIds.has(m.orderId));
+}
+
+const dirty = dirtyState();
+check(dirty.orders.length === 0, 'fixture needs zero orders');
+check(hasDanglingMachineOrder(dirty), 'fixture needs a dangling machine.orderId (orderId 9999, orders [])');
+
+const sim = new Simulation(new EventBus<GameEvents>());
+check(sim.load(dirty), 'load accepts versioned save');
+
+const s = sim.serialize();
+check(!hasDanglingMachineOrder(s), 'machine_order_missing visible through ISim after load');
+check(s.machines[0].status === 'idle', 'dangling machine repaired to idle');
+check(s.machines[0].orderId === null, 'dangling machine orderId cleared');
+check(s.machines[0].drink === null, 'dangling machine drink cleared');
+check(s.machines[0].progress === 0, 'dangling machine progress cleared');
+check(s.machines[0].brewTime === 0, 'dangling machine brewTime cleared');
+
+sim.dispatch({ type: 'brew', drink: 'espresso' }); // no orders -> no_order, must not crash
+sim.advanceTime(5);
+check(!hasDanglingMachineOrder(sim.serialize()), 'machine_order_missing visible through ISim after advanceTime');
+
+console.log('ok: ISim load owns machine_order_missing');

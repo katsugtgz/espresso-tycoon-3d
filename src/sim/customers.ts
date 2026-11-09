@@ -1,38 +1,26 @@
-import type { GameState, CustomerSnap, CustomerKind, DrinkId, OrderSnap } from '../types';
-import type { EventBus } from '../core/events';
-import type { GameEvents } from '../types';
-import { Rng } from '../core/rng';
-import { LAYOUT } from '../config/layout';
-import { BALANCE, DRINKS } from '../config/balance';
-import { selectCustomerKind } from './progression';
-import { advanceTutorial } from './tutorial';
+// Layer 1 — CUSTOMER ACTIONS (mutate state + emit).
+// Pure math lives in rules/spawn.ts + rules/customers.ts + rules/tutorial.ts
+// + rules/money.ts + rules/pricing.ts.
+// Direction: customers -> rules/*, tutorial. Never economy/stations/progression.
 
-function pickDrinkForOrder(unlocked: DrinkId[], rng: Rng): DrinkId {
-  if (unlocked.length === 1) return unlocked[0];
-  let totalWeight = 0;
-  const weights: number[] = [];
-  for (const d of unlocked) {
-    const price = DRINKS[d]?.basePrice ?? 3;
-    const w = 10 / Math.sqrt(price);
-    weights.push(w);
-    totalWeight += w;
-  }
-  let roll = rng.next() * totalWeight;
-  for (let i = 0; i < unlocked.length; i++) {
-    if (roll < weights[i]) return unlocked[i];
-    roll -= weights[i];
-  }
-  return unlocked[0];
-}
+import type { GameState, GameEvents, CustomerSnap, DrinkId, OrderSnap } from '../types';
+import type { EventBus } from '../core/events';
+import type { Rng } from '../core/rng';
+import { LAYOUT } from '../config/layout';
+import { BALANCE } from '../config/balance';
+import { forcedTutorialDrink, isPatiencePaused } from './rules/tutorial';
+import { selectCustomerKind, patienceMaxFor, pickDrinkForOrder } from './rules/spawn';
+import { stepToward, drainRateFor, tickPatience, seatedDurationFor } from './rules/customers';
+import { priceFor, applyRatingPenalty } from './rules/pricing';
+import { clampRating } from './rules/money';
+import { reportTutorialEvent } from './tutorial';
 
 export function spawnCustomer(state: GameState, bus: EventBus<GameEvents>, rng: Rng): void {
   const id = state.nextId++;
   const kind = selectCustomerKind(state.day, rng);
   const variant = rng.int(0, 5);
 
-  let patienceMax = BALANCE.basePatience * (1 + state.upgrades.decor * 0.05);
-  if (kind === 'vip') patienceMax *= 0.7;
-  else if (kind === 'picky') patienceMax *= 0.8;
+  const patienceMax = patienceMaxFor(kind, state.upgrades.decor);
 
   const customer: CustomerSnap = {
     id,
@@ -110,11 +98,10 @@ function handleCustomerTimeout(
 
   bus.emit('customer:emote', { id: customer.id, emote: 'angry' });
 
-  // Rating penalty
-  const newRating = Math.max(1.0, Math.round((state.rating - 0.08) * 100) / 100);
-  const delta = Math.round((newRating - state.rating) * 100) / 100;
-  state.rating = newRating;
-  bus.emit('rating:change', { rating: state.rating, delta });
+  // Rating penalty (pure rule; clamp to rating floor)
+  const applied = applyRatingPenalty(state.rating);
+  state.rating = clampRating(applied.rating);
+  bus.emit('rating:change', { rating: state.rating, delta: applied.delta });
 
   // Combo break
   if (state.combo > 0) {
@@ -133,7 +120,7 @@ export function updateCustomers(
   rng: Rng,
   dt: number
 ): void {
-  const isTutorialPatiencePaused = state.tutorial.active && state.tutorial.step <= 3;
+  const isTutorialPatiencePaused = isPatiencePaused(state.tutorial.active, state.tutorial.step);
   const toRemoveIds = new Set<number>();
 
   for (let cIdx = 0; cIdx < state.customers.length; cIdx++) {
@@ -145,49 +132,28 @@ export function updateCustomers(
       handleCustomerTimeout(customer, state, bus);
     }
 
-    // 1. Move toward target
-    const dx = customer.target.x - customer.pos.x;
-    const dz = customer.target.z - customer.pos.z;
-    const dist = Math.hypot(dx, dz);
-    if (dist > 0.001) {
-      customer.facing = Math.atan2(dx, dz);
-    }
-    const moveStep = LAYOUT.walkSpeed * dt;
-    const reached = dist <= moveStep;
+    // 1. Move toward target (pure motion rule)
+    const moved = stepToward(customer.pos, customer.target, customer.facing, LAYOUT.walkSpeed, dt);
+    customer.pos = moved.pos;
+    customer.facing = moved.facing;
+    const reached = moved.reached;
 
-    if (reached) {
-      customer.pos.x = customer.target.x;
-      customer.pos.z = customer.target.z;
-    } else {
-      customer.pos.x += (dx / dist) * moveStep;
-      customer.pos.z += (dz / dist) * moveStep;
-    }
-
-    // 2. Patience update
+    // 2. Patience update (pure drain rule)
     if (!isTutorialPatiencePaused) {
-      let drainRate = 0;
-      if (customer.state === 'queueing') {
-        drainRate = 0.5 / customer.patienceMax;
-      } else if (customer.state === 'ordering' || customer.state === 'waiting') {
-        drainRate = 1.0 / customer.patienceMax;
-      }
+      const drainRate = drainRateFor(customer.state, customer.patienceMax);
 
       if (drainRate > 0) {
-        const prevPatience = customer.patience;
-        customer.patience = Math.max(0, customer.patience - drainRate * dt);
-
-        // Mood
-        if (customer.patience > 0.6) customer.mood = 'happy';
-        else if (customer.patience >= 0.35) customer.mood = 'neutral';
-        else customer.mood = 'angry';
+        const tick = tickPatience(customer.patience, drainRate, dt);
+        customer.patience = tick.patience;
+        customer.mood = tick.mood;
 
         // Impatient emote trigger
-        if (prevPatience >= 0.35 && customer.patience < 0.35) {
+        if (tick.impatient) {
           bus.emit('customer:emote', { id: customer.id, emote: 'impatient' });
         }
 
         // Timeout
-        if (customer.patience <= 0) {
+        if (tick.timedOut) {
           handleCustomerTimeout(customer, state, bus);
           continue;
         }
@@ -248,13 +214,18 @@ export function updateCustomers(
           // Need to place order after orderDelay
           if (customer.stateTime >= BALANCE.orderDelay) {
             let drink: DrinkId;
-            if (state.tutorial.active && state.tutorial.step <= 1 && state.stats.totalServed === 0) {
-              drink = 'espresso';
+            const tutorialDrink = forcedTutorialDrink(
+              state.tutorial.active,
+              state.tutorial.step,
+              state.stats.totalServed
+            );
+            if (tutorialDrink !== null) {
+              drink = tutorialDrink;
             } else {
               drink = pickDrinkForOrder(state.unlockedDrinks, rng);
             }
 
-            const price = state.prices[drink] ?? DRINKS[drink]?.basePrice ?? 3;
+            const price = priceFor(drink, state.prices);
             const order: OrderSnap = {
               id: state.nextId++,
               customerId: customer.id,
@@ -274,10 +245,8 @@ export function updateCustomers(
               drink,
             });
 
-            // Tutorial progression
-            if (state.tutorial.active && state.tutorial.step === 0) {
-              advanceTutorial(state, bus, 1);
-            }
+            // Tutorial progression (event-driven: only step 0 advances on order_placed)
+            reportTutorialEvent(state, bus, 'order_placed');
           }
         } else {
           // Order placed; wait for an available pickup slot
@@ -331,9 +300,8 @@ export function updateCustomers(
       }
 
       case 'seated': {
-        // Seated duration based on customer id
-        const durationRange = BALANCE.seatedTime[1] - BALANCE.seatedTime[0];
-        const seatedDuration = BALANCE.seatedTime[0] + ((customer.id * 17) % Math.max(1, durationRange));
+        // Seated duration based on customer id (pure rule)
+        const seatedDuration = seatedDurationFor(customer.id);
 
         if (customer.stateTime >= seatedDuration) {
           if (customer.seatId !== null) {

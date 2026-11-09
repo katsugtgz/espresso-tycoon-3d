@@ -1,5 +1,6 @@
 import type { GameState, DrinkId, UpgradeId } from '../types';
 import { SAVE_KEY, SAVE_VERSION, BALANCE, STARTING_DRINKS, DRINKS } from '../config/balance';
+import { clampRating } from './rules/money';
 import { createInitialState, createInitialPrices, createInitialUpgrades, createInitialSeats, createInitialMachines } from './state';
 
 interface SaveEnvelope {
@@ -66,11 +67,26 @@ export function migrate(data: unknown): GameState | null {
       const state = JSON.parse(JSON.stringify(payload)) as GameState;
       // Guard all critical numerical fields
       state.money = Number.isFinite(state.money) ? state.money : BALANCE.startMoney;
-      state.rating = Number.isFinite(state.rating) ? Math.max(1, Math.min(5, state.rating)) : BALANCE.startRating;
+      state.rating = Number.isFinite(state.rating) ? clampRating(state.rating) : BALANCE.startRating;
       state.combo = Number.isFinite(state.combo) ? Math.max(0, state.combo) : 0;
       state.dayTime = Number.isFinite(state.dayTime) ? Math.max(0, state.dayTime) : 0;
       state.clockMinutes = Number.isFinite(state.clockMinutes) ? state.clockMinutes : 480;
       state.lowRatingStrikes = Number.isFinite(state.lowRatingStrikes) ? Math.max(0, state.lowRatingStrikes!) : 0;
+      // Own machine_order_missing at this seam: a machine brewing a nonexistent
+      // order can never run again, so reset it to idle instead of loading it.
+      if (Array.isArray(state.orders) && Array.isArray(state.machines)) {
+        const orderIds = new Set(state.orders.map((o) => o.id));
+        for (const m of state.machines) {
+          if (m.orderId !== null && !orderIds.has(m.orderId)) {
+            m.status = 'idle';
+            m.orderId = null;
+            m.drink = null;
+            m.progress = 0;
+            m.brewTime = 0;
+            m.claimedBy = null;
+          }
+        }
+      }
       return state;
     }
   }
@@ -91,7 +107,7 @@ export function migrate(data: unknown): GameState | null {
 
   const day = Math.floor(rawDay);
   const money = typeof payload.money === 'number' ? payload.money : BALANCE.startMoney;
-  const rating = typeof payload.rating === 'number' ? Math.max(1, Math.min(5, payload.rating)) : BALANCE.startRating;
+  const rating = typeof payload.rating === 'number' ? clampRating(payload.rating) : BALANCE.startRating;
 
   const fresh = createInitialState(Date.now() & 0xffffffff, false);
   fresh.day = Math.floor(day);

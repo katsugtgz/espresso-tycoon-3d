@@ -1,19 +1,18 @@
-import type { GameState, UpgradeId, DrinkId, ActionResult, OrderSnap, CustomerSnap } from '../types';
+import type { GameState, UpgradeId, DrinkId, ActionResult } from '../types';
 import type { EventBus } from '../core/events';
 import type { GameEvents } from '../types';
-import { UPGRADES, DRINKS, PRICE_MIN_MULT, PRICE_MAX_MULT, BALANCE, ACHIEVEMENTS } from '../config/balance';
+import { UPGRADES, DRINKS, BALANCE, ACHIEVEMENTS } from '../config/balance';
 import { LAYOUT, seatPositions } from '../config/layout';
 import { createInitialDayStats } from './state';
-import { generateGoals, evaluateDayEndGoals, checkAchievements } from './progression';
-import { advanceTutorial } from './tutorial';
+import { evaluateDayEndGoals, checkAchievements } from './progression';
+import { generateGoals, rentFor, wagesFor, profitFor } from './rules/goals';
+import { upgradeCostFor, clampPriceFor } from './rules/pricing';
+import { round2 } from './rules/money';
+import { reportTutorialEvent } from './tutorial';
 import { Rng } from '../core/rng';
 
 export function getUpgradeCost(state: GameState, id: UpgradeId): number {
-  const def = UPGRADES[id];
-  if (!def) return Infinity;
-  const currentLvl = state.upgrades[id] ?? 0;
-  if (currentLvl >= def.maxLevel) return Infinity;
-  return Math.round(def.baseCost * Math.pow(def.costMult, currentLvl));
+  return upgradeCostFor(id, state.upgrades[id] ?? 0);
 }
 
 export function buyUpgrade(state: GameState, bus: EventBus<GameEvents>, id: UpgradeId): ActionResult {
@@ -27,8 +26,8 @@ export function buyUpgrade(state: GameState, bus: EventBus<GameEvents>, id: Upgr
   if (state.money < cost) return { ok: false, reason: 'not_enough_money' };
 
   // Deduct cost
-  state.money = Math.round((state.money - cost) * 100) / 100;
-  state.dayStats.expenses = Math.round((state.dayStats.expenses + cost) * 100) / 100;
+  state.money = round2(state.money - cost);
+  state.dayStats.expenses = round2(state.dayStats.expenses + cost);
   state.upgrades[id] = currentLvl + 1;
 
   bus.emit('money:change', { money: state.money, delta: -cost, reason: 'upgrade' });
@@ -96,10 +95,8 @@ export function buyUpgrade(state: GameState, bus: EventBus<GameEvents>, id: Upgr
 
   bus.emit('upgrade:bought', { id, level: state.upgrades[id] });
 
-  // Tutorial progression
-  if (state.tutorial.active && state.tutorial.step === 4) {
-    advanceTutorial(state, bus, 5);
-  }
+  // Tutorial progression (event-driven: only step 4 advances on upgrade_bought)
+  reportTutorialEvent(state, bus, 'upgrade_bought');
 
   checkAchievements(state, bus);
 
@@ -112,8 +109,8 @@ export function unlockDrink(state: GameState, bus: EventBus<GameEvents>, drink: 
   if (state.unlockedDrinks.includes(drink)) return { ok: false, reason: 'already_unlocked' };
   if (state.money < def.unlockCost) return { ok: false, reason: 'not_enough_money' };
 
-  state.money = Math.round((state.money - def.unlockCost) * 100) / 100;
-  state.dayStats.expenses = Math.round((state.dayStats.expenses + def.unlockCost) * 100) / 100;
+  state.money = round2(state.money - def.unlockCost);
+  state.dayStats.expenses = round2(state.dayStats.expenses + def.unlockCost);
   state.unlockedDrinks.push(drink);
 
   bus.emit('money:change', { money: state.money, delta: -def.unlockCost, reason: 'drink_unlock' });
@@ -129,45 +126,9 @@ export function setPrice(state: GameState, drink: DrinkId, price: number): Actio
   if (!def) return { ok: false, reason: 'unknown_drink' };
   if (!Number.isFinite(price) || price <= 0) return { ok: false, reason: 'invalid_price' };
 
-  const min = def.basePrice * PRICE_MIN_MULT;
-  const max = def.basePrice * PRICE_MAX_MULT;
-  const clamped = Math.min(max, Math.max(min, price));
-  state.prices[drink] = Math.round(clamped * 100) / 100;
+  state.prices[drink] = clampPriceFor(drink, price);
 
   return { ok: true };
-}
-
-export function calculateTip(
-  order: OrderSnap,
-  customer: CustomerSnap,
-  combo: number,
-  hasSeatingCapable: boolean
-): number {
-  const basePrice = order.price;
-  const patienceRatio = Math.max(0, Math.min(1, customer.patience));
-  const comboClamped = Math.min(BALANCE.comboCap, Math.max(0, combo));
-  const comboBonus = comboClamped * BALANCE.comboTipBonus;
-
-  // Base tip fraction
-  let tipFraction = BALANCE.tipBase * patienceRatio + comboBonus;
-
-  // Picky customers tip significantly more
-  if (customer.kind === 'picky') {
-    tipFraction *= 1.6;
-  }
-
-  // VIP customers tip generously
-  if (customer.kind === 'vip') {
-    tipFraction *= 1.4;
-  }
-
-  // Seated capable bonus (+15% tip)
-  if (hasSeatingCapable) {
-    tipFraction *= 1.15;
-  }
-
-  const tip = basePrice * tipFraction;
-  return Math.round(Math.max(0, tip) * 100) / 100;
 }
 
 export function endDay(state: GameState, bus: EventBus<GameEvents>): void {
@@ -193,27 +154,27 @@ export function endDay(state: GameState, bus: EventBus<GameEvents>): void {
   }
 
   // Rent & Wages
-  const rent = BALANCE.rentBase + BALANCE.rentPerDay * (state.day - 1);
-  const wages = state.upgrades.barista * BALANCE.baristaWage;
+  const rent = rentFor(state.day);
+  const wages = wagesFor(state.upgrades.barista);
 
   state.dayStats.rent = rent;
   state.dayStats.wages = wages;
 
   const totalDeductions = rent + wages;
-  state.money = Math.round((state.money - totalDeductions) * 100) / 100;
+  state.money = round2(state.money - totalDeductions);
   bus.emit('money:change', {
     money: state.money,
     delta: -totalDeductions,
     reason: 'rent_and_wages',
   });
 
-  state.dayStats.profit = Math.round((
-    state.dayStats.revenue +
-    state.dayStats.tips -
-    state.dayStats.expenses -
-    rent -
+  state.dayStats.profit = round2(profitFor(
+    state.dayStats.revenue,
+    state.dayStats.tips,
+    state.dayStats.expenses,
+    rent,
     wages
-  ) * 100) / 100;
+  ));
 
   state.dayStats.ratingEnd = state.rating;
 

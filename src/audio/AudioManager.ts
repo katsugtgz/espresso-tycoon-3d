@@ -5,6 +5,60 @@ import { SoundEffects } from './SoundEffects';
 import { AmbientGenerator } from './AmbientGenerator';
 import { LofiMusicGenerator } from './LofiMusicGenerator';
 import type { SfxName } from './types';
+/** One bus->sfx pairing the audio module honors. Names/guards live here only. */
+export type AudioSfxSubscription =
+  | { event: 'ui:click'; sfx: 'ui:click'; shouldPlay?: (payload: GameEvents['ui:click']) => boolean }
+  | { event: 'ui:hover'; sfx: 'ui:hover'; shouldPlay?: (payload: GameEvents['ui:hover']) => boolean }
+  | { event: 'brew:start'; sfx: 'brew:start'; shouldPlay?: (payload: GameEvents['brew:start']) => boolean }
+  | { event: 'brew:done'; sfx: 'brew:done'; shouldPlay?: (payload: GameEvents['brew:done']) => boolean }
+  | { event: 'order:served'; sfx: 'order:served'; shouldPlay?: (payload: GameEvents['order:served']) => boolean }
+  | { event: 'combo:change'; sfx: 'combo:change'; shouldPlay?: (payload: GameEvents['combo:change']) => boolean }
+  | { event: 'customer:spawn'; sfx: 'customer:spawn'; shouldPlay?: (payload: GameEvents['customer:spawn']) => boolean }
+  | { event: 'customer:leave'; sfx: 'customer:leave'; shouldPlay?: (payload: GameEvents['customer:leave']) => boolean }
+  | { event: 'order:expired'; sfx: 'order:expired'; shouldPlay?: (payload: GameEvents['order:expired']) => boolean }
+  | { event: 'upgrade:bought'; sfx: 'upgrade:bought'; shouldPlay?: (payload: GameEvents['upgrade:bought']) => boolean }
+  | { event: 'drink:unlocked'; sfx: 'drink:unlocked'; shouldPlay?: (payload: GameEvents['drink:unlocked']) => boolean }
+  | { event: 'achievement'; sfx: 'achievement'; shouldPlay?: (payload: GameEvents['achievement']) => boolean }
+  | { event: 'goal:complete'; sfx: 'goal:complete'; shouldPlay?: (payload: GameEvents['goal:complete']) => boolean }
+  | { event: 'day:end'; sfx: 'day:end'; shouldPlay?: (payload: GameEvents['day:end']) => boolean }
+  | { event: 'rush:start'; sfx: 'rush:start'; shouldPlay?: (payload: GameEvents['rush:start']) => boolean }
+  | { event: 'action:fail'; sfx: 'action:fail'; shouldPlay?: (payload: GameEvents['action:fail']) => boolean };
+
+/**
+ * Single subscription table: the one module-owned list pairing each honored
+ * bus event with its canonical sfx name. Guards stay here so bindEvents is
+ * only iteration, not a second list of names.
+ */
+export const AUDIO_SFX_TABLE: AudioSfxSubscription[] = [
+  { event: 'ui:click', sfx: 'ui:click' },
+  {
+    event: 'ui:hover',
+    sfx: 'ui:hover',
+    shouldPlay: ({ stationId }): boolean => stationId !== null && stationId !== undefined,
+  },
+  { event: 'brew:start', sfx: 'brew:start' },
+  { event: 'brew:done', sfx: 'brew:done' },
+  { event: 'order:served', sfx: 'order:served' },
+  {
+    event: 'combo:change',
+    sfx: 'combo:change',
+    shouldPlay: ({ combo }): boolean => combo >= 3,
+  },
+  { event: 'customer:spawn', sfx: 'customer:spawn' },
+  {
+    event: 'customer:leave',
+    sfx: 'customer:leave',
+    shouldPlay: ({ angry }): boolean => angry,
+  },
+  { event: 'order:expired', sfx: 'order:expired' },
+  { event: 'upgrade:bought', sfx: 'upgrade:bought' },
+  { event: 'drink:unlocked', sfx: 'drink:unlocked' },
+  { event: 'achievement', sfx: 'achievement' },
+  { event: 'goal:complete', sfx: 'goal:complete' },
+  { event: 'day:end', sfx: 'day:end' },
+  { event: 'rush:start', sfx: 'rush:start' },
+  { event: 'action:fail', sfx: 'action:fail' },
+];
 
 export class AudioManager {
   private bus: EventBus<GameEvents>;
@@ -60,117 +114,50 @@ export class AudioManager {
         })
       );
 
-      // SFX Events
-      this.unsubs.push(
-        this.bus.on('ui:click', () => {
-          this.sfx.play('ui:click', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('ui:hover', ({ stationId }) => {
-          if (stationId !== null && stationId !== undefined) {
-            const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-            if (now - this.lastHoverTime >= 80) {
-              this.lastHoverTime = now;
-              this.sfx.play('ui:hover', this.synth);
-            }
-          }
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('brew:start', () => {
-          this.sfx.play('brew:start', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('brew:done', () => {
-          this.sfx.play('brew:done', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('order:served', () => {
-          this.sfx.play('order:served', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('combo:change', ({ combo }) => {
-          if (combo >= 3) {
-            this.sfx.play('combo:change', this.synth, combo);
-          }
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('customer:spawn', () => {
-          this.sfx.play('customer:spawn', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('customer:leave', ({ angry }) => {
-          if (angry) {
-            this.sfx.play('customer:leave', this.synth);
-          }
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('order:expired', () => {
-          this.sfx.play('order:expired', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('upgrade:bought', () => {
-          this.sfx.play('upgrade:bought', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('drink:unlocked', () => {
-          this.sfx.play('drink:unlocked', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('achievement', () => {
-          this.sfx.play('achievement', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('goal:complete', () => {
-          this.sfx.play('goal:complete', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('day:end', () => {
-          this.sfx.play('day:end', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('rush:start', () => {
-          this.sfx.play('rush:start', this.synth);
-        })
-      );
-
-      this.unsubs.push(
-        this.bus.on('action:fail', () => {
-          this.sfx.play('action:fail', this.synth);
-        })
-      );
+      // SFX events: single subscription point; names/guards live in AUDIO_SFX_TABLE.
+      for (const row of AUDIO_SFX_TABLE) {
+        switch (row.event) {
+          case 'ui:click': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'ui:hover': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'brew:start': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'brew:done': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'order:served': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'combo:change': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'customer:spawn': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'customer:leave': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'order:expired': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'upgrade:bought': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'drink:unlocked': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'achievement': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'goal:complete': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'day:end': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'rush:start': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+          case 'action:fail': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
+        }
+      }
 
       // Note: 'toast' event -> explicitly none.
     } catch {
       // Guard all listener registrations
     }
+  }
+
+  private subscribeRow<K extends keyof GameEvents>(
+    event: K,
+    sfx: SfxName,
+    shouldPlay?: (payload: GameEvents[K]) => boolean,
+  ): void {
+    this.unsubs.push(
+      this.bus.on(event, (payload) => {
+        if (shouldPlay !== undefined && !shouldPlay(payload)) return;
+        if (event === 'ui:hover') {
+          const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          if (now - this.lastHoverTime < 80) return;
+          this.lastHoverTime = now;
+        }
+        this.sfx.play(sfx, this.synth, payload);
+      })
+    );
   }
 
   private onGameStart(): void {
