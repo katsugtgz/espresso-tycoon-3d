@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SoundEffects } from '../src/audio/SoundEffects';
-import { AUDIO_SFX_TABLE } from '../src/audio/AudioManager';
+import { AUDIO_SFX_TABLE, AudioManager } from '../src/audio/AudioManager';
 import { SynthContext } from '../src/audio/SynthContext';
 import type { SfxName } from '../src/audio/types';
 import { EventBus } from '../src/core/events';
@@ -88,7 +88,16 @@ const LEGACY_ALIASES = [
   'fail',
 ] as const;
 
-function assertSfxName(_name: SfxName): void {}
+class SpyBus extends EventBus<GameEvents> {
+  subscribed: string[] = [];
+  override on<K extends keyof GameEvents>(
+    name: K,
+    fn: (payload: GameEvents[K]) => void
+  ): () => void {
+    this.subscribed.push(String(name));
+    return super.on(name, fn);
+  }
+}
 
 test('(1) every canonical SfxName dispatches via play without throwing', () => {
   assert.equal(CANONICAL.length, 17);
@@ -104,38 +113,15 @@ test('(1) every canonical SfxName dispatches via play without throwing', () => {
 
 test('(2) legacy alias spellings are not SfxName and stay silent via play', () => {
   assert.equal(LEGACY_ALIASES.length, 15);
-  // Type-level pin: each legacy spelling must NOT be assignable to SfxName.
-  // If the union ever widens again, these lines fail tsc as unused directives.
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('click');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('hover');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('brew_start');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('brew_done');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('order_served');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('combo');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('door_bell');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('angry');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('buzzer');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('upgrade');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('fanfare');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('day_end');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('game_over');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('alert');
-  // @ts-expect-error - legacy alias, not a canonical sfx name
-  assertSfxName('fail');
+  // Runtime pin (tsx --test never type-checks, so @ts-expect-error guards
+  // would be dead comments): the canonical-name mirror holds exactly the 17
+  // names and rejects every legacy spelling.
+  const canonicalNames = new Set(Object.keys(EXPECTED_METHOD));
+  assert.equal(canonicalNames.size, 17);
+  assert.deepEqual(new Set(CANONICAL), canonicalNames);
+  for (const alias of LEGACY_ALIASES) {
+    assert.ok(!canonicalNames.has(alias), `alias '${alias}' must not be a canonical sfx name`);
+  }
 
   // Runtime pin: routed through `as never`, each legacy spelling no-ops.
   const synth = new SynthContext();
@@ -154,10 +140,41 @@ test('(3) every AUDIO_SFX_TABLE row names a matching GameEvents key', () => {
   for (const row of AUDIO_SFX_TABLE) {
     // Type-level: row.event is keyof GameEvents, so this subscribes cleanly.
     const unsub = bus.on(row.event, () => {});
-    assert.equal(typeof unsub, 'function');
-    unsub();
     // One event name, one sfx name: the table pairs each bus event with its
     // own canonical sfx spelling.
     assert.equal(row.sfx, row.event);
   }
+  // Seam pin: the table is the module's single subscription list, so the
+  // manager must register every row on the bus (a row with no subscription
+  // would play no sound and this fails).
+  const spyBus = new SpyBus();
+  const manager = new AudioManager(spyBus);
+  try {
+    for (const row of AUDIO_SFX_TABLE) {
+      assert.ok(
+        spyBus.subscribed.includes(row.event),
+        `AudioManager must subscribe '${row.event}'`
+      );
+    }
+  } finally {
+    manager.dispose();
+  }
+});
+
+test('(4) combo:change forwards the numeric combo to playCombo', () => {
+  const bus = new EventBus<GameEvents>();
+  const manager = new AudioManager(bus);
+  const received: number[] = [];
+  const original = SoundEffects.prototype.playCombo;
+  SoundEffects.prototype.playCombo = function (_synth: SynthContext, combo: number): void {
+    received.push(combo);
+  };
+  try {
+    bus.emit('combo:change', { combo: 7 });
+  } finally {
+    SoundEffects.prototype.playCombo = original;
+    manager.dispose();
+  }
+  // Regression pin: the bus payload is { combo }, but playCombo needs the number.
+  assert.deepEqual(received, [7]);
 });

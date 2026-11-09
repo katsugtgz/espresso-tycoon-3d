@@ -1,4 +1,4 @@
-/** Canonical sfx names. One per GameEvents member the audio module honors. */
+/** Canonical sfx names. Each matches a GameEvents member that plays a sound. */
 export type SfxName =
   | 'ui:click'
   | 'ui:hover'

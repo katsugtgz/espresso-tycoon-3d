@@ -115,25 +115,15 @@ export class AudioManager {
       );
 
       // SFX events: single subscription point; names/guards live in AUDIO_SFX_TABLE.
+      // The table literal is checked against AudioSfxSubscription at definition;
+      // here the module re-reads each row through one widened guard shape so the
+      // table stays the single list instead of a per-event switch that can miss rows.
       for (const row of AUDIO_SFX_TABLE) {
-        switch (row.event) {
-          case 'ui:click': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'ui:hover': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'brew:start': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'brew:done': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'order:served': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'combo:change': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'customer:spawn': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'customer:leave': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'order:expired': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'upgrade:bought': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'drink:unlocked': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'achievement': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'goal:complete': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'day:end': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'rush:start': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-          case 'action:fail': this.subscribeRow(row.event, row.sfx, row.shouldPlay); break;
-        }
+        this.subscribeRow(
+          row.event,
+          row.sfx,
+          row.shouldPlay as ((payload: GameEvents[keyof GameEvents]) => boolean) | undefined
+        );
       }
 
       // Note: 'toast' event -> explicitly none.
@@ -142,10 +132,10 @@ export class AudioManager {
     }
   }
 
-  private subscribeRow<K extends keyof GameEvents>(
-    event: K,
+  private subscribeRow(
+    event: keyof GameEvents,
     sfx: SfxName,
-    shouldPlay?: (payload: GameEvents[K]) => boolean,
+    shouldPlay?: (payload: GameEvents[keyof GameEvents]) => boolean
   ): void {
     this.unsubs.push(
       this.bus.on(event, (payload) => {
@@ -155,7 +145,9 @@ export class AudioManager {
           if (now - this.lastHoverTime < 80) return;
           this.lastHoverTime = now;
         }
-        this.sfx.play(sfx, this.synth, payload);
+        // combo:change carries { combo }; playCombo needs the rising number.
+        const extra = event === 'combo:change' ? (payload as GameEvents['combo:change']).combo : payload;
+        this.sfx.play(sfx, this.synth, extra);
       })
     );
   }
