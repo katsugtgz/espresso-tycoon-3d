@@ -7,7 +7,7 @@ import { DRINK_ORDER } from '../types';
 import type { EventBus } from '../core/events';
 import type { GameEvents } from '../types';
 import { ACHIEVEMENTS } from '../config/balance';
-import { goalValueFor } from './rules/goals';
+import { goalValueFor, NO_LOST_MIN_SERVED } from './rules/goals';
 import { round2 } from './rules/money';
 
 export function updateGoalsProgress(state: GameState, bus: EventBus<GameEvents>): void {
@@ -40,7 +40,7 @@ export function evaluateDayEndGoals(state: GameState, bus: EventBus<GameEvents>)
   for (const goal of state.goals) {
     if (goal.done) continue;
     if (goal.metric === 'noLost') {
-      if (state.dayStats.lost === 0 && state.dayStats.served >= 8) {
+      if (state.dayStats.lost === 0 && state.dayStats.served >= NO_LOST_MIN_SERVED) {
         goal.progress = 1;
         goal.done = true;
         state.money = round2(state.money + goal.reward);

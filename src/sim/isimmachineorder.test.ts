@@ -53,4 +53,23 @@ sim.dispatch({ type: 'brew', drink: 'espresso' }); // no orders -> no_order, mus
 sim.advanceTime(5);
 check(!hasDanglingMachineOrder(sim.serialize()), 'machine_order_missing visible through ISim after advanceTime');
 
+// Missing orders: the load seam must still repair dangling machines —
+// a missing orders list means every machine.orderId dangles.
+const missingOrders = dirtyState() as unknown as Record<string, unknown>;
+delete missingOrders.orders;
+const simMissing = new Simulation(new EventBus<GameEvents>());
+check(simMissing.load(missingOrders), 'load accepts save with missing orders');
+const sm = simMissing.serialize();
+check(sm.machines[0].status === 'idle', 'missing orders: dangling machine repaired to idle');
+check(sm.machines[0].orderId === null, 'missing orders: dangling machine orderId cleared');
+
+// Malformed orders: same repair, treating the list as empty.
+const malformedOrders = dirtyState() as unknown as Record<string, unknown>;
+malformedOrders.orders = 'nope';
+const simMalformed = new Simulation(new EventBus<GameEvents>());
+check(simMalformed.load(malformedOrders), 'load accepts save with malformed orders');
+const sw = simMalformed.serialize();
+check(sw.machines[0].status === 'idle', 'malformed orders: dangling machine repaired to idle');
+check(sw.machines[0].orderId === null, 'malformed orders: dangling machine orderId cleared');
+
 console.log('ok: ISim load owns machine_order_missing');

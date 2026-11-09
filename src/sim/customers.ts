@@ -1,7 +1,7 @@
 // Layer 1 — CUSTOMER ACTIONS (mutate state + emit).
 // Pure math lives in rules/spawn.ts + rules/customers.ts + rules/tutorial.ts
 // + rules/money.ts + rules/pricing.ts.
-// Direction: customers -> rules/*, tutorial. Never economy/stations/progression.
+// Direction: customers -> rules/*, tutorial, state (snap reset). Never economy/stations/progression.
 
 import type { GameState, GameEvents, CustomerSnap, DrinkId, OrderSnap } from '../types';
 import type { EventBus } from '../core/events';
@@ -14,6 +14,7 @@ import { stepToward, drainRateFor, tickPatience, seatedDurationFor } from './rul
 import { priceFor, applyRatingPenalty } from './rules/pricing';
 import { clampRating } from './rules/money';
 import { reportTutorialEvent } from './tutorial';
+import { resetMachine } from './state';
 
 export function spawnCustomer(state: GameState, bus: EventBus<GameEvents>, rng: Rng): void {
   const id = state.nextId++;
@@ -57,12 +58,7 @@ function handleCustomerTimeout(
       if (order.machineId !== null) {
         const machine = state.machines.find((m) => m.id === order.machineId);
         if (machine) {
-          machine.status = 'idle';
-          machine.orderId = null;
-          machine.drink = null;
-          machine.progress = 0;
-          machine.brewTime = 0;
-          machine.claimedBy = null;
+          resetMachine(machine);
         }
       }
       bus.emit('order:expired', {

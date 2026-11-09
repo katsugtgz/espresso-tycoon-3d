@@ -3,7 +3,7 @@ import type { EventBus } from '../core/events';
 import type { GameEvents } from '../types';
 import { UPGRADES, DRINKS, BALANCE, ACHIEVEMENTS } from '../config/balance';
 import { LAYOUT, seatPositions } from '../config/layout';
-import { createInitialDayStats } from './state';
+import { createInitialDayStats, resetMachine } from './state';
 import { evaluateDayEndGoals, checkAchievements } from './progression';
 import { generateGoals, rentFor, wagesFor, profitFor } from './rules/goals';
 import { upgradeCostFor, clampPriceFor } from './rules/pricing';
@@ -140,12 +140,7 @@ export function endDay(state: GameState, bus: EventBus<GameEvents>): void {
     s.occupantId = null;
   }
   for (const m of state.machines) {
-    m.status = 'idle';
-    m.orderId = null;
-    m.drink = null;
-    m.progress = 0;
-    m.brewTime = 0;
-    m.claimedBy = null;
+    resetMachine(m);
   }
   for (const b of state.baristas) {
     b.task = 'idle';

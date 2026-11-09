@@ -1,7 +1,7 @@
 import type { GameState, DrinkId, UpgradeId } from '../types';
 import { SAVE_KEY, SAVE_VERSION, BALANCE, STARTING_DRINKS, DRINKS } from '../config/balance';
 import { clampRating } from './rules/money';
-import { createInitialState, createInitialPrices, createInitialUpgrades, createInitialSeats, createInitialMachines } from './state';
+import { createInitialState, createInitialPrices, createInitialUpgrades, createInitialSeats, createInitialMachines, resetMachine } from './state';
 
 interface SaveEnvelope {
   version: number;
@@ -74,16 +74,11 @@ export function migrate(data: unknown): GameState | null {
       state.lowRatingStrikes = Number.isFinite(state.lowRatingStrikes) ? Math.max(0, state.lowRatingStrikes!) : 0;
       // Own machine_order_missing at this seam: a machine brewing a nonexistent
       // order can never run again, so reset it to idle instead of loading it.
-      if (Array.isArray(state.orders) && Array.isArray(state.machines)) {
-        const orderIds = new Set(state.orders.map((o) => o.id));
+      if (Array.isArray(state.machines)) {
+        const orderIds = new Set(Array.isArray(state.orders) ? state.orders.map((o) => o.id) : []);
         for (const m of state.machines) {
           if (m.orderId !== null && !orderIds.has(m.orderId)) {
-            m.status = 'idle';
-            m.orderId = null;
-            m.drink = null;
-            m.progress = 0;
-            m.brewTime = 0;
-            m.claimedBy = null;
+            resetMachine(m);
           }
         }
       }

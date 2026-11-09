@@ -11,7 +11,7 @@ import type { TutorialEvent } from './rules/tutorial';
 export type { TutorialEvent };
 
 /** Low-level step setter + emit. Prefer reportTutorialEvent (event-driven). */
-export function advanceTutorial(state: GameState, bus: EventBus<GameEvents>, toStep: number): void {
+function advanceTutorial(state: GameState, bus: EventBus<GameEvents>, toStep: number): void {
   if (!state.tutorial.active) return;
   state.tutorial.step = toStep;
   if (isCompleteStep(toStep)) {

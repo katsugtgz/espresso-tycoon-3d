@@ -1,5 +1,5 @@
 // Layer 1 — BARISTA ACTIONS (mutate state + emit via station actions).
-// Direction: baristas -> stations (+ rules via stations). Never economy/customers.
+// Direction: baristas -> stations, rules/brew. Never economy/customers.
 
 import type { GameState } from '../types';
 import type { EventBus } from '../core/events';

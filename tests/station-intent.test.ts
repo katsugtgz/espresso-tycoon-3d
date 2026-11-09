@@ -173,6 +173,14 @@ test('slice 5e: table intent validates the table index', () => {
     sim.dispatch({ type: 'clickStationIntent', intent: { kind: 'table', index: tableCount } }),
     { ok: false, reason: 'invalid_station' },
   );
+  assert.deepEqual(
+    sim.dispatch({ type: 'clickStationIntent', intent: { kind: 'table', index: -1 } }),
+    { ok: false, reason: 'invalid_station' },
+  );
+  assert.deepEqual(
+    sim.dispatch({ type: 'clickStationIntent', intent: { kind: 'table', index: 1.5 } }),
+    { ok: false, reason: 'invalid_station' },
+  );
 });
 
 test('adapter: string edge delegates to the same ordering as intents', () => {

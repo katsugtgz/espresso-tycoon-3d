@@ -5,6 +5,9 @@ import type { Rng } from '../../core/rng';
 import type { DayStats, Goal } from '../../types';
 import { BALANCE } from '../../config/balance';
 
+/** Minimum served count for the noLost day-end goal (shared with progression.ts). */
+export const NO_LOST_MIN_SERVED = 8;
+
 /** Pick 3 unique daily goals. Pure in (day, rng draws) — same sequence as before. */
 export function generateGoals(day: number, rng: Rng): Goal[] {
   const allMetrics: Array<{
@@ -47,7 +50,7 @@ export function generateGoals(day: number, rng: Rng): Goal[] {
       metric: 'noLost',
       gen: () => {
         const reward = Math.round(18 + day * 8);
-        return { desc: `Finish the day with zero lost customers (min 8 served)`, target: 1, reward };
+        return { desc: `Finish the day with zero lost customers (min ${NO_LOST_MIN_SERVED} served)`, target: 1, reward };
       },
     },
   ];
