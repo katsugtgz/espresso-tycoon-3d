@@ -47,6 +47,16 @@ export function createInitialMachines(machineCount: number = BALANCE.baseMachine
   return machines;
 }
 
+/** Restore a machine snap to its initial idle shape (no order, no progress). */
+export function resetMachine(machine: MachineSnap): void {
+  machine.status = 'idle';
+  machine.orderId = null;
+  machine.drink = null;
+  machine.progress = 0;
+  machine.brewTime = 0;
+  machine.claimedBy = null;
+}
+
 export function createInitialPrices(): Record<DrinkId, number> {
   const prices = {} as Record<DrinkId, number>;
   for (const id of Object.keys(DRINKS) as DrinkId[]) {

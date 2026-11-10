@@ -178,10 +178,23 @@ export interface GameState {
 // ---------------------------------------------------------------------------
 /** Station ids: 'machine:<id>' | 'grinder' | 'counter' | 'register' | 'table:<id>' */
 export type StationId = string;
+/**
+ * Typed station intent: what a click means, without the string encoding.
+ * The sim module owns string parsing (StationId -> StationIntent) plus branch
+ * ordering from here inward, so callers pass an intent they cannot misspell
+ * instead of a formatted string.
+ */
+export type StationIntent =
+  | { kind: 'machine'; id: number }
+  | { kind: 'counter' }
+  | { kind: 'register' }
+  | { kind: 'grinder' }
+  | { kind: 'table'; index: number };
 
 export type GameAction =
   | { type: 'newGame'; seed?: number; tutorial?: boolean }
-  | { type: 'clickStation'; stationId: StationId }   // one-click flow: idle machine -> brew oldest pending order; ready machine -> serve
+  | { type: 'clickStation'; stationId: StationId }   // one-click flow: idle machine -> brew oldest pending order; ready machine -> serve (string edge: parsed to intent inside sim)
+  | { type: 'clickStationIntent'; intent: StationIntent }  // typed intent: parsing + ordering owned inside sim module; preferred for new callers
   | { type: 'brew'; drink: DrinkId }                   // hotkey: start brewing oldest pending order of this drink on first idle machine
   | { type: 'serve'; machineId?: number }              // serve a ready machine (default: first ready)
   | { type: 'buyUpgrade'; id: UpgradeId }

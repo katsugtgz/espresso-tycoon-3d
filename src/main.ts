@@ -2,6 +2,7 @@ import { EventBus } from './core/events';
 import { loadSettings, saveSettings } from './core/settings';
 import { Simulation } from './sim/Simulation';
 import { saveGame, loadGame, hasSave, clearSave } from './sim/save';
+import { parseStationId } from './sim/stations';
 import { GameRenderer } from './render/GameRenderer';
 import { UIManager } from './ui/UIManager';
 import { AudioManager } from './audio/AudioManager';
@@ -28,7 +29,13 @@ const uiRoot = document.getElementById('ui-root') as HTMLElement;
 const renderer = new GameRenderer(canvas, sim, bus);
 renderer.setQuality(settings.quality);
 renderer.onStationClick = (stationId) => {
-  const r = sim.dispatch({ type: 'clickStation', stationId });
+  // Render speaks strings (picking domain); the sim module owns parsing, so
+  // convert at this edge to a typed intent and dispatch that. Unparseable
+  // strings fall back to the legacy edge, which reports invalid_station.
+  const intent = parseStationId(stationId);
+  const r = intent
+    ? sim.dispatch({ type: 'clickStationIntent', intent })
+    : sim.dispatch({ type: 'clickStation', stationId });
   bus.emit('ui:click', {});
   if (!r.ok && r.reason) bus.emit('action:fail', { action: 'clickStation', reason: r.reason });
 };

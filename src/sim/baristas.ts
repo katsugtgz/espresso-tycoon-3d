@@ -1,9 +1,13 @@
+// Layer 1 — BARISTA ACTIONS (mutate state + emit via station actions).
+// Direction: baristas -> stations, rules/brew. Never economy/customers.
+
 import type { GameState } from '../types';
 import type { EventBus } from '../core/events';
 import type { GameEvents } from '../types';
 import { LAYOUT } from '../config/layout';
 import { BALANCE } from '../config/balance';
 import { startBrewingOrder, serveMachine } from './stations';
+import { oldestPendingOrder, firstIdleMachine, firstReadyMachine } from './rules/brew';
 
 export function updateBaristas(state: GameState, bus: EventBus<GameEvents>, dt: number): void {
   for (const barista of state.baristas) {
@@ -25,9 +29,7 @@ export function updateBaristas(state: GameState, bus: EventBus<GameEvents>, dt: 
     if (barista.cooldown > 0) continue;
 
     // 3. Action priority 1: Serve ready machines
-    const readyMachine = state.machines.find(
-      (m) => m.status === 'ready' && (m.claimedBy === null || m.claimedBy === barista.id)
-    );
+    const readyMachine = firstReadyMachine(state.machines, barista.id);
 
     if (readyMachine) {
       const machinePos = LAYOUT.machineSlots[readyMachine.id] ?? LAYOUT.counter;
@@ -43,15 +45,11 @@ export function updateBaristas(state: GameState, bus: EventBus<GameEvents>, dt: 
     }
 
     // 4. Action priority 2: Start brewing pending orders on idle machines
-    const idleMachine = state.machines.find(
-      (m) => m.status === 'idle' && (m.claimedBy === null || m.claimedBy === barista.id)
-    );
+    const idleMachine = firstIdleMachine(state.machines, barista.id);
 
     if (idleMachine) {
       // Find oldest pending order not already claimed by a machine
-      const pendingOrder = state.orders.find(
-        (o) => o.status === 'pending' && o.machineId === null
-      );
+      const pendingOrder = oldestPendingOrder(state.orders);
 
       if (pendingOrder) {
         const machinePos = LAYOUT.machineSlots[idleMachine.id] ?? LAYOUT.counter;

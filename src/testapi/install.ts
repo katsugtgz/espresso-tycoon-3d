@@ -1,4 +1,5 @@
 import type { AppContext } from '../appTypes';
+import { parseStationId } from '../sim/stations';
 import type { DrinkId, GameAction, GameSpeed, UpgradeId } from '../types';
 import { InvariantChecker, type Violation } from './invariants';
 import type {
@@ -182,7 +183,10 @@ export function installTestAPI(ctx: AppContext): TestGameAPI {
         return { ok: true };
       },
       clickStation(id: string) {
-        return ctx.sim.dispatch({ type: 'clickStation', stationId: id });
+        const intent = parseStationId(id);
+        return intent
+          ? ctx.sim.dispatch({ type: 'clickStationIntent', intent })
+          : ctx.sim.dispatch({ type: 'clickStation', stationId: id });
       },
       brew(drink: DrinkId) {
         return ctx.sim.dispatch({ type: 'brew', drink });

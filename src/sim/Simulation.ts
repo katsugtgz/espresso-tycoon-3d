@@ -1,3 +1,9 @@
+// Layer 2 — ORCHESTRATION. Simulation dispatches actions, runs the fixed-step
+// tick, and owns emit/save/RNG plumbing. Pure math lives in rules/*; state
+// mutation lives in Layer 1 action modules.
+// Direction: Simulation -> actions + rules. Rules never import EventBus,
+// GameState, or sibling sim modules.
+
 import type {
   ISim,
   GameState,
@@ -12,16 +18,16 @@ import { BALANCE } from '../config/balance';
 import { createInitialState } from './state';
 import { migrate } from './save';
 import { getUpgradeCost, buyUpgrade, unlockDrink, setPrice, endDay, startNextDay } from './economy';
-import { clickStation, brewDrink, serveMachine, updateMachines } from './stations';
+import { clickStationIntent, clickStation, brewDrink, serveMachine, updateMachines } from './stations';
 import { updateBaristas } from './baristas';
 import { spawnCustomer, updateCustomers } from './customers';
-import {
-  generateGoals,
-  updateGoalsProgress,
-  checkAchievements,
-  calculateSpawnInterval,
-} from './progression';
-import { advanceTutorial, skipTutorial, handleTutorialAck } from './tutorial';
+import { updateGoalsProgress, checkAchievements } from './progression';
+import { generateGoals } from './rules/goals';
+import { spawnIntervalFor } from './rules/spawn';
+import { clampRating } from './rules/money';
+import { shouldBlockSpawns } from './rules/tutorial';
+import { firstReadyMachine } from './rules/brew';
+import { skipTutorial, handleTutorialAck } from './tutorial';
 
 export class Simulation implements ISim {
   public state: GameState;
@@ -62,6 +68,11 @@ export class Simulation implements ISim {
           return clickStation(this.state, this.bus, action.stationId);
         }
 
+        case 'clickStationIntent': {
+          if (this.state.phase !== 'playing') return { ok: false, reason: 'not_playing' };
+          return clickStationIntent(this.state, this.bus, action.intent);
+        }
+
         case 'brew': {
           if (this.state.phase !== 'playing') return { ok: false, reason: 'not_playing' };
           return brewDrink(this.state, this.bus, action.drink);
@@ -71,7 +82,7 @@ export class Simulation implements ISim {
           if (this.state.phase !== 'playing') return { ok: false, reason: 'not_playing' };
           let machineId = action.machineId;
           if (machineId === undefined) {
-            const readyMachine = this.state.machines.find((m) => m.status === 'ready');
+            const readyMachine = firstReadyMachine(this.state.machines);
             if (!readyMachine) return { ok: false, reason: 'no_ready_machine' };
             machineId = readyMachine.id;
           }
@@ -216,10 +227,11 @@ export class Simulation implements ISim {
       this.state.clockMinutes < 1170 &&
       this.state.customers.length < BALANCE.maxCustomers;
 
-    const tutorialBlock =
-      this.state.tutorial.active &&
-      this.state.tutorial.step <= 3 &&
-      this.state.customers.length >= 1;
+    const tutorialBlock = shouldBlockSpawns(
+      this.state.tutorial.active,
+      this.state.tutorial.step,
+      this.state.customers.length
+    );
 
     if (canSpawn && !tutorialBlock) {
       this.state.spawnTimer -= dt;
@@ -231,7 +243,13 @@ export class Simulation implements ISim {
             spawnCustomer(this.state, this.bus, rng);
           }
         }
-        const interval = calculateSpawnInterval(this.state);
+        const interval = spawnIntervalFor({
+          day: this.state.day,
+          rating: this.state.rating,
+          marketingLevel: this.state.upgrades.marketing,
+          unlocked: this.state.unlockedDrinks,
+          prices: this.state.prices,
+        });
         this.state.spawnTimer = interval * rng.range(0.85, 1.15);
       }
     }
@@ -254,7 +272,7 @@ export class Simulation implements ISim {
 
     // Guard all stats and critical numbers against NaN
     this.state.money = Number.isFinite(this.state.money) ? this.state.money : 0;
-    this.state.rating = Number.isFinite(this.state.rating) ? Math.max(1, Math.min(5, this.state.rating)) : 3;
+    this.state.rating = Number.isFinite(this.state.rating) ? clampRating(this.state.rating) : 3;
 
     // Sync RNG state back
     this.state.rngState = rng.state;

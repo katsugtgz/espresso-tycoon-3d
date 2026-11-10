@@ -1,11 +1,31 @@
 import type { GameState, DrinkId, UpgradeId } from '../types';
 import { SAVE_KEY, SAVE_VERSION, BALANCE, STARTING_DRINKS, DRINKS } from '../config/balance';
-import { createInitialState, createInitialPrices, createInitialUpgrades, createInitialSeats, createInitialMachines } from './state';
+import { clampRating } from './rules/money';
+import { createInitialState, createInitialPrices, createInitialUpgrades, createInitialSeats, createInitialMachines, resetMachine } from './state';
 
 interface SaveEnvelope {
   version: number;
   savedAt: number;
   state: GameState;
+}
+
+// OrderSnap field guard: every field the sim/HUD dereferences next frame
+// must be present with a sane type, else the ticket is bogus.
+function isOrderSnap(o: unknown): o is GameState['orders'][number] {
+  if (typeof o !== 'object' || o === null) return false;
+  const e = o as Record<string, unknown>;
+  return (
+    typeof e.id === 'number' &&
+    typeof e.customerId === 'number' &&
+    typeof e.drink === 'string' &&
+    Object.prototype.hasOwnProperty.call(DRINKS, e.drink) &&
+    (e.status === 'pending' || e.status === 'brewing' || e.status === 'ready') &&
+    typeof e.createdAt === 'number' &&
+    Number.isFinite(e.createdAt) &&
+    typeof e.price === 'number' &&
+    Number.isFinite(e.price) &&
+    (e.machineId === null || (typeof e.machineId === 'number' && Number.isFinite(e.machineId)))
+  );
 }
 
 export function saveGame(state: GameState): boolean {
@@ -63,14 +83,45 @@ export function migrate(data: unknown): GameState | null {
   // Case 1: Version 2 save
   if (raw.version === SAVE_VERSION || payload.version === SAVE_VERSION) {
     if (typeof payload.money === 'number' && typeof payload.day === 'number' && Array.isArray(payload.unlockedDrinks)) {
+      // Raw-order validation (pre-clone): JSON cloning maps non-finite
+      // numbers (Infinity/NaN from 1e400-style payloads) to null, hiding
+      // them from post-clone checks — so validate the raw entries here.
+      // A bogus ticket would crash sim/HUD next frame and cannot be
+      // dropped without rewriting order indexing, so any failure rejects
+      // the save. A missing/non-array list means every machine orderId
+      // dangles, hence the empty set after cloning.
+      if (payload.orders !== undefined && payload.orders !== null) {
+        if (!Array.isArray(payload.orders)) payload.orders = [];
+        else if ((payload.orders as unknown[]).some((o: unknown) => !isOrderSnap(o))) return null;
+      }
       const state = JSON.parse(JSON.stringify(payload)) as GameState;
       // Guard all critical numerical fields
       state.money = Number.isFinite(state.money) ? state.money : BALANCE.startMoney;
-      state.rating = Number.isFinite(state.rating) ? Math.max(1, Math.min(5, state.rating)) : BALANCE.startRating;
+      state.rating = Number.isFinite(state.rating) ? clampRating(state.rating) : BALANCE.startRating;
       state.combo = Number.isFinite(state.combo) ? Math.max(0, state.combo) : 0;
       state.dayTime = Number.isFinite(state.dayTime) ? Math.max(0, state.dayTime) : 0;
       state.clockMinutes = Number.isFinite(state.clockMinutes) ? state.clockMinutes : 480;
       state.lowRatingStrikes = Number.isFinite(state.lowRatingStrikes) ? Math.max(0, state.lowRatingStrikes!) : 0;
+      // Own machine_order_missing at this seam: a machine brewing a nonexistent
+      // order can never run again, so reset it to idle instead of loading it.
+      if (Array.isArray(state.machines)) {
+        // A machine snap is slot-indexed state; a non-object entry cannot be
+        // repaired without inventing a snap, so reject the save like other
+        // corrupted data at this seam instead of throwing on dereference.
+        if (state.machines.some((m) => typeof m !== 'object' || m === null)) return null;
+        // Orders were validated pre-clone (non-finite-safe); a missing list
+        // means every machine orderId dangles, hence the empty set below.
+        if (state.orders === undefined || state.orders === null) state.orders = [];
+        else if (!Array.isArray(state.orders)) state.orders = [];
+        // Only numeric ids confer membership: a machine with a missing
+        // orderId must not match via undefined.
+        const orderIds = new Set(state.orders.map((o) => o.id));
+        for (const m of state.machines) {
+          if (m.orderId !== null && !orderIds.has(m.orderId as number)) {
+            resetMachine(m);
+          }
+        }
+      }
       return state;
     }
   }
@@ -91,7 +142,7 @@ export function migrate(data: unknown): GameState | null {
 
   const day = Math.floor(rawDay);
   const money = typeof payload.money === 'number' ? payload.money : BALANCE.startMoney;
-  const rating = typeof payload.rating === 'number' ? Math.max(1, Math.min(5, payload.rating)) : BALANCE.startRating;
+  const rating = typeof payload.rating === 'number' ? clampRating(payload.rating) : BALANCE.startRating;
 
   const fresh = createInitialState(Date.now() & 0xffffffff, false);
   fresh.day = Math.floor(day);

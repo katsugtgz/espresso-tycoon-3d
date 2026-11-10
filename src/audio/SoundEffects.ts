@@ -5,65 +5,50 @@ export class SoundEffects {
   public play(name: SfxName, synth: SynthContext, extra?: any): void {
     try {
       switch (name) {
-        case 'click':
         case 'ui:click':
           this.playClick(synth);
           break;
-        case 'hover':
         case 'ui:hover':
           this.playHover(synth);
           break;
-        case 'brew_start':
         case 'brew:start':
           this.playBrewStart(synth);
           break;
-        case 'brew_done':
         case 'brew:done':
           this.playBrewDone(synth);
           break;
-        case 'order_served':
         case 'order:served':
           this.playOrderServed(synth);
           break;
-        case 'combo':
         case 'combo:change':
           this.playCombo(synth, typeof extra === 'number' ? extra : 3);
           break;
-        case 'door_bell':
         case 'customer:spawn':
           this.playDoorBell(synth);
           break;
-        case 'angry':
         case 'customer:leave':
           this.playAngry(synth);
           break;
-        case 'buzzer':
         case 'order:expired':
           this.playBuzzer(synth);
           break;
-        case 'upgrade':
         case 'upgrade:bought':
         case 'drink:unlocked':
           this.playUpgrade(synth);
           break;
-        case 'fanfare':
         case 'achievement':
         case 'goal:complete':
           this.playFanfare(synth);
           break;
-        case 'day_end':
         case 'day:end':
           this.playDayEnd(synth);
           break;
-        case 'game_over':
         case 'game:over':
           this.playGameOver(synth);
           break;
-        case 'alert':
         case 'rush:start':
           this.playAlert(synth);
           break;
-        case 'fail':
         case 'action:fail':
           this.playFail(synth);
           break;
